@@ -58,7 +58,7 @@ func (d *Dispatcher) processUpdates() {
 	fmt.Printf("%#v\n", d.lastUpdate)
 	upLen := len(d.updateResp)
 	if upLen > 0 {
-		//d.lastUpdate = d.updateResp[upLen-1].UpdateId
+		d.lastUpdate = d.updateResp[upLen-1].UpdateId
 		for i := 0; i < upLen; i++ {
 			handleUpdate(d.updateResp[i])
 		}
