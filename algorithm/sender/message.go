@@ -1,12 +1,11 @@
 package sender
 
 import (
-	"net/url"
-	"strconv"
-	"fmt"
-	"net/http"
 	"boobsBot/config"
 	"log"
+	"net/http"
+	"net/url"
+	"strconv"
 )
 
 // Отправляет сообщение в чат
@@ -17,7 +16,6 @@ func SendMessage(chatId int, text string) {
 	params.Set("chat_id", strconv.Itoa(chatId))
 	params.Set("text", text)
 	u.RawQuery = params.Encode()
-	fmt.Println(u.String())
 	_, err := http.Get(u.String())
 	if err != nil {
 		log.Println(err)

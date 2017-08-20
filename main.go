@@ -1,15 +1,15 @@
 package main
 
 import (
-	"boobsBot/algorithm"
 	"fmt"
 	"log"
 	"os"
+
+	"boobsBot/algorithm"
 	"boobsBot/config"
 )
 
 func main() {
-
 	initLogFile()
 	new(algorithm.Dispatcher).Run()
 }
@@ -20,9 +20,8 @@ func initLogFile() (*os.File, error) {
 	if err != nil {
 		return file, fmt.Errorf("Cannot open log file")
 	}
-	log.SetOutput(file) // 469350825
+	log.SetOutput(file)
 	log.SetFlags(3)
 	log.Println("Bot Parser is starting...")
-
 	return file, nil
 }

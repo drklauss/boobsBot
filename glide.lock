@@ -1,6 +1,13 @@
-hash: 0d25a443b47c7ef28625c74028fb76b4202f224f0423324066d927318c350b14
-updated: 2017-08-18T16:42:41.303027493+03:00
+hash: 6d4f1e968e123af8aab3a865d78ac963ca00220e326947ff5c96b403bb1a6a4a
+updated: 2017-08-20T21:34:19.667339235+03:00
 imports:
-- name: github.com/dghubble/sling
-  version: eb56e89ac5088bebb12eef3cb4b293300f43608b
+- name: github.com/andybalholm/cascadia
+  version: 349dd0209470eabd9514242c688c403c0926d266
+- name: github.com/PuerkitoBio/goquery
+  version: e1271ee34c6a305e38566ecd27ae374944907ee9
+- name: golang.org/x/net
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  subpackages:
+  - html
+  - html/atom
 testImports: []
