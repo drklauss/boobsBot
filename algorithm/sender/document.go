@@ -10,7 +10,7 @@ import (
 
 // https://core.telegram.org/bots/api#senddocument
 func SendDocument(chatId int, docUrl string) {
-	u, _ := url.ParseRequestURI(config.ApiUrl + config.Token)
+	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/sendDocument"
 	params := url.Values{}
 	params.Set("chat_id", strconv.Itoa(chatId))

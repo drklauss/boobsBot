@@ -2,16 +2,16 @@ package gfycat
 
 import (
 	"fmt"
-	"log"
-
 	"boobsBot/config"
 
 	"io/ioutil"
 	"net/http"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
+// Класс обеспечивает получение url для gif
+// curl -X POST -d "grant_type=password&username=dr_klauss&password=aL4514209"
+// 		--user "hmOdEs1gOvXN4w:VwJV78wGCMGD2pvNQGyeaDHlzlk"
+// 		--user-agent "My BoobsBot" https://www.reddit.com/api/v1/access_token
 type Provider struct {
 	urls []string
 }
@@ -19,43 +19,42 @@ type Provider struct {
 // Init инициализирует провайдер
 // Парсит урлы и складывает их в срез
 func (p *Provider) Init() Provider {
-	parseMainPage()
+	getNewUrls()
 
 	return *p
 }
 
-func (p *Provider) GetUrl() {
-	parseMainPage()
+// Возвращает один URL гифки
+// Берем один url и возвращаем его. Уменьшаем срез на один урл и проверяем длину среза.
+// Если срез пустой, то снова запрашиваем новые урлы
+func (p *Provider) GetUrl() string {
+	url := p.urls[len(p.urls)-1]
+	p.urls = p.urls[:len(p.urls)-1]
+	p.updateUrls()
+
+	return url
 }
 
-func parseMainPage() {
-	//u, _ := url.ParseRequestURI(config.RedditUrl)
-	//var w http.ResponseWriter
+// Получает новые URL-ы гифок
+// todo: пока написана тестовая опреация получения данных о пользователе. Переделать!
+// todo: к тому же еще нужно обрабатывать все gyficat url-ы, для получения роликов в mp4
+func getNewUrls() {
+
 	client := new(http.Client)
-	req, _ := http.NewRequest("GET", config.RedditUrl, nil)
-	//cookie := http.Cookie{Name: "over18", Value: "1"}
-	//req.AddCookie(&cookie)
-	resp, _ := client.Do(req)
-	body, _ := ioutil.ReadAll(resp.Body)
+	req, _ := http.NewRequest("GET", "https://oauth.reddit.com/api/v1/me", nil)
+	req.Header.Set("Authorization", "bearer "+config.RedditToken)
+	req.Header.Set("User-Agent", "My private BoobsBot")
+	resp, err := client.Do(req)
 	defer resp.Body.Close()
-	//resp, err := http.Get(u.String())
-	//fmt.Fprintf("%v\n", w.Header().Set())
-	fmt.Printf("%s\n", body)
-
-	doc, err := goquery.NewDocument(config.RedditUrl)
+	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		fmt.Printf("%s\n", err)
 	}
-	println("here")
+	fmt.Printf("%s\n", responseBody)
 
-	// Find the review items
-	doc.Find(".interstitial").Each(func(i int, s *goquery.Selection) {
-		url, exist := s.Attr("data-url")
-		fmt.Printf("%v\n", exist)
-		if exist {
+}
 
-			fmt.Printf("%v\n", url)
-		}
+// Проверяем урлы, если иъ уже нет, то запрашиваем в срез новые
+func (p *Provider) updateUrls() {
 
-	})
 }

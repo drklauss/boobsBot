@@ -10,7 +10,7 @@ import (
 
 // Отправляет сообщение в чат
 func SendMessage(chatId int, text string) {
-	u, _ := url.ParseRequestURI(config.ApiUrl + config.Token)
+	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/sendMessage"
 	params := url.Values{}
 	params.Set("chat_id", strconv.Itoa(chatId))

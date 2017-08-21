@@ -10,7 +10,7 @@ import (
 
 // Обрабатывет входящий update
 func (d *Dispatcher) handleUpdate(update entities.Update) {
-	comName := strings.Split(update.Message.Text, config.FullBotName)
+	comName := strings.Split(update.Message.Text, config.TmFullBotName)
 	switch comName[0] {
 	case config.HelloCom:
 		sendHello(update)

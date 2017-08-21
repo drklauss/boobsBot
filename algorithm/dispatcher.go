@@ -25,7 +25,7 @@ type Dispatcher struct {
 func (d *Dispatcher) Run() {
 	d.urlProvider = new(gfycat.Provider).Init()
 	for {
-		time.Sleep(config.RequestTime * time.Second)
+		time.Sleep(config.TmUpdateTime * time.Second)
 		err := d.initUpdateEntities()
 		if err != nil {
 			log.Println(err)
@@ -38,7 +38,7 @@ func (d *Dispatcher) Run() {
 // Получение обновлений
 func (d *Dispatcher) initUpdateEntities() error {
 	d.updateResp = []entities.Update{}
-	u, _ := url.ParseRequestURI(config.ApiUrl + config.Token)
+	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/getUpdates"
 	params := url.Values{}
 	params.Set("offset", strconv.Itoa(d.lastUpdateId+1))
