@@ -1,9 +1,6 @@
 package algorithm
 
 import (
-	"boobsBot/algorithm/gfycat"
-	"boobsBot/config"
-	"boobsBot/entities"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -12,18 +9,22 @@ import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"boobsBot/algorithm/dataProvider"
+	"boobsBot/config"
+	"boobsBot/entities"
 )
 
 type Dispatcher struct {
 	updateResp     []entities.Update
-	urlProvider    gfycat.Provider
+	urlProvider    dataProvider.Provider
 	motions        []string
 	lastUpdateId   int
 	lastUpdateTime int64
 }
 
 func (d *Dispatcher) Run() {
-	d.urlProvider = new(gfycat.Provider).Init()
+	d.urlProvider = new(dataProvider.Provider).Init()
 	for {
 		time.Sleep(config.TmUpdateTime * time.Second)
 		err := d.initUpdateEntities()
