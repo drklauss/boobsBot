@@ -8,17 +8,18 @@ import (
 	"boobsBot/entities"
 )
 
-// Обрабатывет входящий update
+// Обрабатывет команду
 func (d *Dispatcher) handleUpdate(update entities.Update) {
 	comName := strings.Split(update.Message.Text, config.TmFullBotName)
-	switch comName[0] {
-	case config.HelloCom:
+	command := strings.Replace(comName[0], "/", "", -1)
+	switch command {
+	case config.Hello:
 		sendHello(update)
-	case config.NewCom:
+	case config.New:
 		sendNewCorn(update)
-	case config.HotCom:
+	case config.Hot:
 		sendHotCorn(update)
-	case config.RandomCom:
+	case config.Random:
 		sendRandomCorn(update)
 	}
 }

@@ -7,35 +7,38 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"encoding/json"
 )
 
-var RedditToken string
+var TokenSample TokenResponse
 
-func GetUrls(uType string) ([]string, error ){
-
+func GetUrls(uType string) ([]string, error) {
+	if !isGoodToken() {
+		refreshToken()
+	}
+	return getNewUrls(uType)
 }
 
-func checkToken() {
+// Проверяет действителен ли токен
+func isGoodToken() bool {
+	isGoodToken := true
 	client := new(http.Client)
 	req, _ := http.NewRequest("GET", GetMeUrl, nil)
-	req.Header.Set("User-Agent", "My private BoobsBot")
+	req.Header.Set("User-Agent", UserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		log.Println(err)
 	}
-	defer resp.Body.Close()
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		log.Println(err)
+	if resp.StatusCode != http.StatusOK {
+		isGoodToken = false
 	}
-	if resp.
-	fmt.Printf("%s\n", responseBody)
-	log.Fatal("Stopped Manualy")
+
+	return isGoodToken
 }
 
-func getNewToken() (string, error) {
+// Получает новый токен и записывает его
+func refreshToken() error {
 	client := new(http.Client)
 	params := url.Values{}
 	params.Set("grant_type", "password")
@@ -43,32 +46,38 @@ func getNewToken() (string, error) {
 	params.Set("password", Password)
 	req, _ := http.NewRequest("POST", GetTokenUrl, strings.NewReader(params.Encode()))
 	req.SetBasicAuth(ClientId, ClientSecret)
-	req.Header.Set("User-Agent", "My private BoobsBot")
+	req.Header.Set("User-Agent", UserAgent)
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
-	fmt.Printf("%s\n", responseBody)
+	err = json.Unmarshal(respBody, &TokenSample)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// Получает новые URL-ы гифок
-// todo: пока написана тестовая опреация получения данных о пользователе. Переделать!
-// todo: к тому же еще нужно обрабатывать все gyficat url-ы, для получения роликов в mp4
-func getNewUrls() {
-
+// Получает новые URL-ы по типу
+func getNewUrls(uType string) ([]string, error) {
+	var urls[]string
+	var err error
 	client := new(http.Client)
-	req, _ := http.NewRequest("GET", "https://oauth.reddit.com/api/v1/me", nil)
-	req.Header.Set("Authorization", "bearer "+RedditToken)
-	req.Header.Set("User-Agent", "My private BoobsBot")
+	fmt.Println(ApiUrl+NSFW+uType)
+	fmt.Printf("%+v\n",TokenSample)
+	req, _ := http.NewRequest("GET", ApiUrl+NSFW+uType, nil)
+	req.Header.Set("Authorization", "bearer "+TokenSample.Token)
+	req.Header.Set("User-Agent", UserAgent)
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
-	responseBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := ioutil.ReadAll(resp.Body) // todo: разобрать тело в структурку и вернуть срез URL-ов
 	if err != nil {
 		fmt.Printf("%s\n", err)
+		return urls, err
 	}
-	fmt.Printf("%s\n", responseBody)
-	log.Fatal("Stopped Manualy")
 
+	return urls, nil
 }
