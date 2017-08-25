@@ -1,4 +1,4 @@
-package entities
+package telegram
 
 type Response struct {
 	Ok     bool     `json:"ok"`
@@ -14,7 +14,7 @@ type Message struct {
 	Id   int    `json:"message_id"`
 	From User   `json:"from"`
 	Chat Chat   `json:"chat"`
-	Date int64    `json:"date"`
+	Date int64  `json:"date"`
 	Text string `json:"text"`
 }
 

@@ -1,13 +1,15 @@
 package reddit
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
-	"encoding/json"
+
+	"boobsBot/algorithm/config"
 )
 
 var TokenSample TokenResponse
@@ -23,8 +25,8 @@ func GetUrls(uType string) ([]string, error) {
 func isGoodToken() bool {
 	isGoodToken := true
 	client := new(http.Client)
-	req, _ := http.NewRequest("GET", GetMeUrl, nil)
-	req.Header.Set("User-Agent", UserAgent)
+	req, _ := http.NewRequest("GET", config.GetMeUrl, nil)
+	req.Header.Set("User-Agent", config.UserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Printf("%s\n", err)
@@ -42,11 +44,11 @@ func refreshToken() error {
 	client := new(http.Client)
 	params := url.Values{}
 	params.Set("grant_type", "password")
-	params.Set("username", UserName)
-	params.Set("password", Password)
-	req, _ := http.NewRequest("POST", GetTokenUrl, strings.NewReader(params.Encode()))
-	req.SetBasicAuth(ClientId, ClientSecret)
-	req.Header.Set("User-Agent", UserAgent)
+	params.Set("username", config.UserName)
+	params.Set("password", config.Password)
+	req, _ := http.NewRequest("POST", config.GetTokenUrl, strings.NewReader(params.Encode()))
+	req.SetBasicAuth(config.ClientId, config.ClientSecret)
+	req.Header.Set("User-Agent", config.UserAgent)
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 	respBody, err := ioutil.ReadAll(resp.Body)
@@ -63,21 +65,33 @@ func refreshToken() error {
 
 // Получает новые URL-ы по типу
 func getNewUrls(uType string) ([]string, error) {
-	var urls[]string
+	var urls []string
 	var err error
 	client := new(http.Client)
-	fmt.Println(ApiUrl+NSFW+uType)
-	fmt.Printf("%+v\n",TokenSample)
-	req, _ := http.NewRequest("GET", ApiUrl+NSFW+uType, nil)
+	fmt.Println(config.ApiUrl + config.NSFW + uType)
+	fmt.Printf("%+v\n", TokenSample)
+
+	req, _ := http.NewRequest("GET", config.ApiUrl+config.NSFW+uType, nil)
+	data := req.URL.Query()
+	data.Set("limit", "50")
+	req.URL.RawQuery = data.Encode()
 	req.Header.Set("Authorization", "bearer "+TokenSample.Token)
-	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("User-Agent", config.UserAgent)
 	resp, err := client.Do(req)
+	if err != nil {
+		return urls, err
+	}
+	fmt.Printf("%v\n", req.RequestURI)
 	defer resp.Body.Close()
-	respBody, err := ioutil.ReadAll(resp.Body) // todo: разобрать тело в структурку и вернуть срез URL-ов
+	respBody, _ := ioutil.ReadAll(resp.Body) // todo: разобрать тело в структурку и вернуть срез URL-ов
+	var subResp SubRedditResponse
+	err = json.Unmarshal(respBody, &subResp)
+	fmt.Printf("%v\n", subResp)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		return urls, err
 	}
+	log.Fatal()
 
 	return urls, nil
 }

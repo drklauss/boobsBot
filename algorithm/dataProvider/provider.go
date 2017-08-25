@@ -3,8 +3,8 @@ package dataProvider
 import (
 	"log"
 
+	"boobsBot/algorithm/config"
 	"boobsBot/algorithm/dataProvider/reddit"
-	"boobsBot/config"
 )
 
 // Класс является черным ящиком для получения нужного URL-а по категории

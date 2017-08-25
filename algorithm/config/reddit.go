@@ -1,4 +1,4 @@
-package reddit
+package config
 
 const (
 	GetTokenUrl  = "https://www.reddit.com/api/v1/access_token"

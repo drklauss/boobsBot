@@ -3,13 +3,12 @@ package algorithm
 import (
 	"strings"
 
-	"boobsBot/algorithm/sender"
-	"boobsBot/config"
-	"boobsBot/entities"
+	"boobsBot/algorithm/config"
+	"boobsBot/algorithm/telegram"
 )
 
 // Обрабатывет команду
-func (d *Dispatcher) handleUpdate(update entities.Update) {
+func (d *Dispatcher) handleUpdate(update telegram.Update) {
 	comName := strings.Split(update.Message.Text, config.TmFullBotName)
 	command := strings.Replace(comName[0], "/", "", -1)
 	switch command {
@@ -24,22 +23,22 @@ func (d *Dispatcher) handleUpdate(update entities.Update) {
 	}
 }
 
-func sendHello(update entities.Update) {
-	sender.SendMessage(update.Message.Chat.Id, "Same to you")
+func sendHello(update telegram.Update) {
+	telegram.SendMessage(update.Message.Chat.Id, "Same to you")
 }
 
-func sendNewCorn(update entities.Update) {
-	sender.SendMessage(update.Message.Chat.Id, "Ha-Ha-Ha")
+func sendNewCorn(update telegram.Update) {
+	telegram.SendMessage(update.Message.Chat.Id, "Ha-Ha-Ha")
 }
 
-func sendHotCorn(update entities.Update) {
+func sendHotCorn(update telegram.Update) {
 
-	sender.SendDocument(update.Message.Chat.Id, "https://thumbs.gfycat.com/ZigzagAbleDuckling-mobile.mp4")
+	telegram.SendDocument(update.Message.Chat.Id, "https://thumbs.gfycat.com/ZigzagAbleDuckling-mobile.mp4")
 	// Удаляем отправленный элемент из массива
 }
 
-func sendRandomCorn(update entities.Update) {
+func sendRandomCorn(update telegram.Update) {
 
-	sender.SendDocument(update.Message.Chat.Id, "https://thumbs.gfycat.com/ZigzagAbleDuckling-mobile.mp4")
+	telegram.SendDocument(update.Message.Chat.Id, "https://thumbs.gfycat.com/ZigzagAbleDuckling-mobile.mp4")
 	// Удаляем отправленный элемент из массива
 }

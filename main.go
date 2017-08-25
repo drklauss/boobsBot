@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"boobsBot/algorithm"
-	"boobsBot/config"
+	"boobsBot/algorithm/config"
 )
 
 func main() {

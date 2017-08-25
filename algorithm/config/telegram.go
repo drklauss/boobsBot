@@ -12,5 +12,4 @@ const (
 	New    = "new"    // Give me a new corn
 	Hot    = "hot"    // Give me a hot corn
 	Random = "random" // Give me a random corn
-
 )

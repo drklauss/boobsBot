@@ -1,12 +1,27 @@
-package sender
+package telegram
 
 import (
-	"boobsBot/config"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"boobsBot/algorithm/config"
 )
+
+// Отправляет сообщение в чат
+func SendMessage(chatId int, text string) {
+	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
+	u.Path += "/sendMessage"
+	params := url.Values{}
+	params.Set("chat_id", strconv.Itoa(chatId))
+	params.Set("text", text)
+	u.RawQuery = params.Encode()
+	_, err := http.Get(u.String())
+	if err != nil {
+		log.Println(err)
+	}
+}
 
 // https://core.telegram.org/bots/api#senddocument
 func SendDocument(chatId int, docUrl string) {

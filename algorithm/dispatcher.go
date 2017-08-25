@@ -10,13 +10,13 @@ import (
 	"strconv"
 	"time"
 
+	"boobsBot/algorithm/config"
 	"boobsBot/algorithm/dataProvider"
-	"boobsBot/config"
-	"boobsBot/entities"
+	"boobsBot/algorithm/telegram"
 )
 
 type Dispatcher struct {
-	updateResp     []entities.Update
+	updateResp     []telegram.Update
 	urlProvider    dataProvider.Provider
 	motions        []string
 	lastUpdateId   int
@@ -38,7 +38,7 @@ func (d *Dispatcher) Run() {
 
 // Получение обновлений
 func (d *Dispatcher) initUpdateEntities() error {
-	d.updateResp = []entities.Update{}
+	d.updateResp = []telegram.Update{}
 	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/getUpdates"
 	params := url.Values{}
@@ -50,14 +50,14 @@ func (d *Dispatcher) initUpdateEntities() error {
 	}
 	defer resp.Body.Close()
 	responseBody, err := ioutil.ReadAll(resp.Body)
-	var response entities.Response
+	var response telegram.Response
 	err = json.Unmarshal(responseBody, &response)
 	d.updateResp = response.Result
 
 	return err
 }
 
-// Обрабатывает обновления
+// Обрабатывает полученные обновления
 // todo: сделать проверку на время, т.к. если приложение выключено, и написать много сообщений боту - жестко спаммит
 // todo: здесь же сделать проверку на
 func (d *Dispatcher) processUpdates() {

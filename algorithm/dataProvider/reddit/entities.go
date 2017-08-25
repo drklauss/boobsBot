@@ -12,6 +12,19 @@ type TokenResponse struct {
 	Scope     string `json:"scope"`
 }
 
-type NSFWResponse struct {
+type SubRedditResponse struct {
+	Data CommonData `json:"data"`
+}
 
+type CommonData struct {
+	Children []Children `json:"children"`
+}
+
+type Children struct {
+	Data Data `json:"data"`
+}
+
+type Data struct {
+	Domain string `json:"domain"`
+	Url    string `json:"url"`
 }
