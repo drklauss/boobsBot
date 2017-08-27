@@ -8,8 +8,8 @@ const (
 	TmFullBotName = "@DornBot"
 	TmUpdateTime  = 2
 	// Комманды бота
-	Hello  = "hello"  // Say Hello
-	New    = "new"    // Give me a new corn
-	Hot    = "hot"    // Give me a hot corn
-	Random = "random" // Give me a random corn
+	Hello = "hello"  // Say Hello
+	New   = "new"    // Give me a new corn
+	Hot   = "hot"    // Give me a hot corn
+	Top   = "top" // Give me a top corn
 )

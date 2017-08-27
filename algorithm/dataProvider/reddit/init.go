@@ -9,16 +9,19 @@ import (
 	"net/url"
 	"strings"
 
-	"boobsBot/algorithm/config"
+	"strconv"
+
+	"github.com/boobsBot/algorithm/config"
 )
 
 var TokenSample TokenResponse
 
-func GetUrls(uType string) ([]string, error) {
+// GetNames возвращает названия новых видео
+func GetNames(uType string) ([]string, error) {
 	if !isGoodToken() {
 		refreshToken()
 	}
-	return getNewUrls(uType)
+	return fetchNames(uType)
 }
 
 // Проверяет действителен ли токен
@@ -63,17 +66,15 @@ func refreshToken() error {
 	return nil
 }
 
-// Получает новые URL-ы по типу
-func getNewUrls(uType string) ([]string, error) {
+// Возвращает названия новых видео по типу
+func fetchNames(uType string) ([]string, error) {
 	var urls []string
 	var err error
 	client := new(http.Client)
 	fmt.Println(config.ApiUrl + config.NSFW + uType)
-	fmt.Printf("%+v\n", TokenSample)
-
 	req, _ := http.NewRequest("GET", config.ApiUrl+config.NSFW+uType, nil)
 	data := req.URL.Query()
-	data.Set("limit", "50")
+	data.Set("limit", strconv.Itoa(config.UrlsLimit))
 	req.URL.RawQuery = data.Encode()
 	req.Header.Set("Authorization", "bearer "+TokenSample.Token)
 	req.Header.Set("User-Agent", config.UserAgent)
@@ -81,17 +82,28 @@ func getNewUrls(uType string) ([]string, error) {
 	if err != nil {
 		return urls, err
 	}
-	fmt.Printf("%v\n", req.RequestURI)
 	defer resp.Body.Close()
-	respBody, _ := ioutil.ReadAll(resp.Body) // todo: разобрать тело в структурку и вернуть срез URL-ов
+	respBody, _ := ioutil.ReadAll(resp.Body)
 	var subResp SubRedditResponse
 	err = json.Unmarshal(respBody, &subResp)
-	fmt.Printf("%v\n", subResp)
 	if err != nil {
-		fmt.Printf("%s\n", err)
 		return urls, err
 	}
-	log.Fatal()
+	urls = getOnlyUsefulNames(subResp)
 
 	return urls, nil
+}
+
+// Возвращает только названия видео с gfycat
+func getOnlyUsefulNames(subResp SubRedditResponse) []string {
+	var names []string
+	for _, child := range subResp.Data.Children {
+		if child.Data.Domain != config.GfycatDomain {
+			continue
+		}
+		namesSlice := strings.Split(child.Data.Url, "/")
+		names = append(names, namesSlice[len(namesSlice)-1])
+	}
+
+	return names
 }

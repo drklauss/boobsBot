@@ -3,8 +3,8 @@ package algorithm
 import (
 	"strings"
 
-	"boobsBot/algorithm/config"
-	"boobsBot/algorithm/telegram"
+	"github.com/boobsBot/algorithm/config"
+	"github.com/boobsBot/algorithm/telegram"
 )
 
 // Обрабатывет команду
@@ -18,7 +18,7 @@ func (d *Dispatcher) handleUpdate(update telegram.Update) {
 		sendNewCorn(update)
 	case config.Hot:
 		sendHotCorn(update)
-	case config.Random:
+	case config.Top:
 		sendRandomCorn(update)
 	}
 }

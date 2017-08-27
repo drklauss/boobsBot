@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"time"
 
-	"boobsBot/algorithm/config"
-	"boobsBot/algorithm/dataProvider"
-	"boobsBot/algorithm/telegram"
+	"github.com/boobsBot/algorithm/config"
+	"github.com/boobsBot/algorithm/dataProvider"
+	"github.com/boobsBot/algorithm/telegram"
 )
 
 type Dispatcher struct {
@@ -58,13 +58,12 @@ func (d *Dispatcher) initUpdateEntities() error {
 }
 
 // Обрабатывает полученные обновления
-// todo: сделать проверку на время, т.к. если приложение выключено, и написать много сообщений боту - жестко спаммит
-// todo: здесь же сделать проверку на
 func (d *Dispatcher) processUpdates() {
 	fmt.Printf("%#v\n", len(d.updateResp))
 	fmt.Printf("%#v\n", d.lastUpdateId)
 	upLen := len(d.updateResp)
 	if upLen > 0 {
+		// todo: поставить время обновления
 		d.lastUpdateId = d.updateResp[upLen-1].UpdateId
 		d.lastUpdateTime = d.updateResp[upLen-1].Message.Date
 		for i := 0; i < upLen; i++ {

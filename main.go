@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"boobsBot/algorithm"
-	"boobsBot/algorithm/config"
+	"github.com/boobsBot/algorithm"
+	"github.com/boobsBot/algorithm/config"
 )
 
 func main() {
@@ -22,6 +22,6 @@ func initLogFile() (*os.File, error) {
 	}
 	log.SetOutput(file)
 	log.SetFlags(3)
-	log.Println("Bot Parser is starting...")
+	log.Println("-=-=-=-=-=Bot is starting...=-=-=-=-=-")
 	return file, nil
 }

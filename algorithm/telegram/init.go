@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"boobsBot/algorithm/config"
+	"github.com/boobsBot/algorithm/config"
 )
 
 // Отправляет сообщение в чат
