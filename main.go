@@ -22,6 +22,6 @@ func initLogFile() (*os.File, error) {
 	}
 	log.SetOutput(file)
 	log.SetFlags(3)
-	log.Println("-=-=-=-=-=Bot is starting...=-=-=-=-=-")
+	log.Println("-=-=-=-=Bot is starting=-=-=-=-")
 	return file, nil
 }

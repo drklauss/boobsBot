@@ -2,7 +2,6 @@ package algorithm
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,23 +15,22 @@ import (
 )
 
 type Dispatcher struct {
-	updateResp     []telegram.Update
-	urlProvider    dataProvider.Provider
-	motions        []string
-	lastUpdateId   int
-	lastUpdateTime int64
+	updateResp   []telegram.Update
+	urlProvider  dataProvider.Provider
+	motions      []string
+	lastUpdateId int
 }
 
 func (d *Dispatcher) Run() {
 	d.urlProvider = new(dataProvider.Provider).Init()
 	for {
-		time.Sleep(config.TmUpdateTime * time.Second)
 		err := d.initUpdateEntities()
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 		d.processUpdates()
+		time.Sleep(config.TmUpdateTime * time.Second)
 	}
 }
 
@@ -50,23 +48,27 @@ func (d *Dispatcher) initUpdateEntities() error {
 	}
 	defer resp.Body.Close()
 	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 	var response telegram.Response
-	err = json.Unmarshal(responseBody, &response)
+	if err = json.Unmarshal(responseBody, &response); err != nil {
+		return err
+	}
 	d.updateResp = response.Result
 
-	return err
+	return nil
 }
 
 // Обрабатывает полученные обновления
 func (d *Dispatcher) processUpdates() {
-	fmt.Printf("%#v\n", len(d.updateResp))
-	fmt.Printf("%#v\n", d.lastUpdateId)
 	upLen := len(d.updateResp)
 	if upLen > 0 {
-		// todo: поставить время обновления
 		d.lastUpdateId = d.updateResp[upLen-1].UpdateId
-		d.lastUpdateTime = d.updateResp[upLen-1].Message.Date
 		for i := 0; i < upLen; i++ {
+			if time.Now().Unix() > d.updateResp[i].Message.Date+config.TmSkipMessagesTime {
+				continue
+			}
 			d.handleUpdate(d.updateResp[i])
 		}
 	}

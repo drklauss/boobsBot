@@ -3,6 +3,8 @@ package algorithm
 import (
 	"strings"
 
+	"fmt"
+
 	"github.com/boobsBot/algorithm/config"
 	"github.com/boobsBot/algorithm/telegram"
 )
@@ -13,32 +15,15 @@ func (d *Dispatcher) handleUpdate(update telegram.Update) {
 	command := strings.Replace(comName[0], "/", "", -1)
 	switch command {
 	case config.Hello:
-		sendHello(update)
+		telegram.SendMessage(update.Message.Chat.Id, "Well, Hello")
 	case config.New:
-		sendNewCorn(update)
+		u := d.urlProvider.GetUrl(config.New)
+		fmt.Printf("Real got %v\n", u)
+
+		telegram.SendDocument(update.Message.Chat.Id, u)
 	case config.Hot:
-		sendHotCorn(update)
+		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.Hot))
 	case config.Top:
-		sendRandomCorn(update)
+		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.Top))
 	}
-}
-
-func sendHello(update telegram.Update) {
-	telegram.SendMessage(update.Message.Chat.Id, "Same to you")
-}
-
-func sendNewCorn(update telegram.Update) {
-	telegram.SendMessage(update.Message.Chat.Id, "Ha-Ha-Ha")
-}
-
-func sendHotCorn(update telegram.Update) {
-
-	telegram.SendDocument(update.Message.Chat.Id, "https://thumbs.gfycat.com/ZigzagAbleDuckling-mobile.mp4")
-	// Удаляем отправленный элемент из массива
-}
-
-func sendRandomCorn(update telegram.Update) {
-
-	telegram.SendDocument(update.Message.Chat.Id, "https://thumbs.gfycat.com/ZigzagAbleDuckling-mobile.mp4")
-	// Удаляем отправленный элемент из массива
 }

@@ -2,18 +2,19 @@ package gfycat
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
+	"sync"
+
 	"github.com/boobsBot/algorithm/config"
 )
 
-var validUrls []string
-
 // ConvertNamesToUrls преобразовывает названия в ссылки
-func ConvertNamesToUrls(names []string) ([]string, error) {
+func ConvertNamesToUrls(names []string, key string) ([]string, error) {
+	validUrls := make(map[string][]string)
+	mutex := sync.Mutex{}
 	gfyCh := make(chan GfyItem, config.Threads)
 	namesCh := make(chan string, len(names))
 	for i := 1; i <= config.Threads; i++ {
@@ -27,16 +28,17 @@ func ConvertNamesToUrls(names []string) ([]string, error) {
 
 	for a := 0; a < len(names); a++ {
 		gfy := <-gfyCh
-		validUrls = append(validUrls, gfy.MobileUrl)
+		mutex.Lock()
+		validUrls[key] = append(validUrls[key], gfy.MobileUrl)
+		mutex.Unlock()
 	}
 	close(gfyCh)
 
-	return validUrls, nil
+	return validUrls[key], nil
 }
 
 func gfyWorker(namesCh <-chan string, gfyCh chan<- GfyItem) {
 	for name := range namesCh {
-		fmt.Printf("%v\n", name)
 		client := new(http.Client)
 		req, _ := http.NewRequest("GET", config.GfycatUrl+name, nil)
 		resp, err := client.Do(req)
@@ -56,8 +58,6 @@ func gfyWorker(namesCh <-chan string, gfyCh chan<- GfyItem) {
 			return
 		}
 		resp.Body.Close()
-
-		fmt.Printf("%v\n", response.GfyItem)
 		gfyCh <- response.GfyItem
 	}
 

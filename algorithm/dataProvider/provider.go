@@ -3,12 +3,12 @@ package dataProvider
 import (
 	"log"
 
-	"time"
+	"fmt"
+	"sync"
 
 	"github.com/boobsBot/algorithm/config"
 	"github.com/boobsBot/algorithm/dataProvider/gfycat"
 	"github.com/boobsBot/algorithm/dataProvider/reddit"
-	"fmt"
 )
 
 // Класс является черным ящиком для получения нужного URL-а по категории
@@ -20,17 +20,22 @@ type Provider struct {
 // Init инициализирует провайдер
 // Парсит урлы и складывает их в срез
 func (p *Provider) Init() Provider {
-	var err error
+	var wg sync.WaitGroup
 	p.Urls = make(map[string][]string)
-	go p.updateUrls(config.New)
-	go p.updateUrls(config.Hot)
-	go p.updateUrls(config.Top)
-	if err != nil {
-		log.Println(err)
-	}
-	time.Sleep(10 * time.Second)
-	fmt.Printf("%v\n", p.Urls)
-	log.Fatal("Stopped Manualy")
+	wg.Add(3)
+	go func() {
+		p.updateUrls(config.New)
+		wg.Done()
+	}()
+	go func() {
+		p.updateUrls(config.Hot)
+		wg.Done()
+	}()
+	go func() {
+		p.updateUrls(config.Top)
+		wg.Done()
+	}()
+	wg.Wait()
 
 	return *p
 }
@@ -41,13 +46,15 @@ func (p *Provider) GetUrl(uType string) string {
 	var u string
 	ln := len(p.Urls[uType])
 	if ln == 1 {
+		fmt.Printf("equals to 1")
 		go p.updateUrls(uType)
 	}
 	if ln > 0 {
-		u = p.Urls[uType][len(p.Urls)-1]
+		u = p.Urls[uType][len(p.Urls[uType])-1]
 		p.Urls[uType] = p.Urls[uType][:len(p.Urls[uType])-1]
+		fmt.Printf("+%v\n", p.Urls[uType])
 	}
-	log.Printf("Remain %d, %s url(s)", p.Urls[uType], uType)
+	log.Printf("Remain %d %s url(s)", len(p.Urls[uType]), uType)
 
 	return u
 }
@@ -56,10 +63,11 @@ func (p *Provider) GetUrl(uType string) string {
 func (p *Provider) updateUrls(uType string) {
 	log.Printf("Starting update for %s urls", uType)
 	redditUrls, err := reddit.GetNames(uType)
+	fmt.Printf("Updated %d %v url(s)", len(redditUrls), uType)
 	if err != nil {
 		log.Println(err.Error())
 	}
-	convertedUrls, err := gfycat.ConvertNamesToUrls(redditUrls)
+	convertedUrls, err := gfycat.ConvertNamesToUrls(redditUrls, uType)
 	if err != nil {
 		log.Println(err.Error())
 	}

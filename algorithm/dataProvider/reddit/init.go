@@ -2,7 +2,6 @@ package reddit
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -32,7 +31,6 @@ func isGoodToken() bool {
 	req.Header.Set("User-Agent", config.UserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("%s\n", err)
 		log.Println(err)
 	}
 	if resp.StatusCode != http.StatusOK {
@@ -71,7 +69,6 @@ func fetchNames(uType string) ([]string, error) {
 	var urls []string
 	var err error
 	client := new(http.Client)
-	fmt.Println(config.ApiUrl + config.NSFW + uType)
 	req, _ := http.NewRequest("GET", config.ApiUrl+config.NSFW+uType, nil)
 	data := req.URL.Query()
 	data.Set("limit", strconv.Itoa(config.UrlsLimit))
