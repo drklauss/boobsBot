@@ -1,13 +1,11 @@
 package algorithm
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"net/url"
-	"strconv"
 	"time"
+
+	"fmt"
+	"strings"
 
 	"github.com/boobsBot/algorithm/config"
 	"github.com/boobsBot/algorithm/dataProvider"
@@ -21,10 +19,12 @@ type Dispatcher struct {
 	lastUpdateId int
 }
 
+// Run запускает бота
 func (d *Dispatcher) Run() {
 	d.urlProvider = new(dataProvider.Provider).Init()
 	for {
-		err := d.initUpdateEntities()
+		var err error
+		d.updateResp, err = telegram.GetUpdateEntities(d.lastUpdateId)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -32,32 +32,6 @@ func (d *Dispatcher) Run() {
 		d.processUpdates()
 		time.Sleep(config.TmUpdateTime * time.Second)
 	}
-}
-
-// Получение обновлений
-func (d *Dispatcher) initUpdateEntities() error {
-	d.updateResp = []telegram.Update{}
-	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
-	u.Path += "/getUpdates"
-	params := url.Values{}
-	params.Set("offset", strconv.Itoa(d.lastUpdateId+1))
-	u.RawQuery = params.Encode()
-	resp, err := http.Get(u.String())
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	var response telegram.Response
-	if err = json.Unmarshal(responseBody, &response); err != nil {
-		return err
-	}
-	d.updateResp = response.Result
-
-	return nil
 }
 
 // Обрабатывает полученные обновления
@@ -71,5 +45,21 @@ func (d *Dispatcher) processUpdates() {
 			}
 			d.handleUpdate(d.updateResp[i])
 		}
+	}
+}
+
+// Обрабатывет команду
+func (d *Dispatcher) handleUpdate(update telegram.Update) {
+	comName := strings.Split(update.Message.Text, config.TmFullBotName)
+	command := strings.Replace(comName[0], "/", "", -1)
+	switch command {
+	case config.Hello:
+		telegram.SendMessage(update.Message.Chat.Id, fmt.Sprintf("Well, Hello, %s!", update.Message.From.FirstName))
+	case config.New:
+		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.New))
+	case config.Hot:
+		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.Hot))
+	case config.Top:
+		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.Top))
 	}
 }
