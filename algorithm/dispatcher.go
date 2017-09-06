@@ -15,7 +15,6 @@ import (
 type Dispatcher struct {
 	updateResp   []telegram.Update
 	urlProvider  dataProvider.Provider
-	motions      []string
 	lastUpdateId int
 }
 
