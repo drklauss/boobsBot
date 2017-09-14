@@ -17,7 +17,7 @@ func main() {
 	defer logFile.Close()
 
 	var up int
-	flag.IntVar(&up, "u", 0, "Update Links")
+	flag.IntVar(&up, "u", 0, "Update Links. Example: -u 500 will fetch and save 500 links")
 	flag.Parse()
 	if up > 0 {
 		provider := new(dataProvider.Provider)

@@ -45,17 +45,15 @@ func (p *Provider) GetUrl(chatId int) string {
 	if err != nil {
 		log.Println(err)
 	}
-	p.createViewEntry(chatId, url.Id)
+	go p.createViewEntry(chatId, url.Id)
 
 	return url.Value
 }
 
 // Создает запись в просмотрах для чата
-func (p *Provider) createViewEntry(chatId int, urlId int) error {
+func (p *Provider) createViewEntry(chatId int, urlId int) {
 	view := gorm2.Views{ChatId: chatId, UrlId: urlId}
-	err := p.db.Create(view).Error
-
-	return err
+	p.db.Create(view)
 }
 
 // Очищает просмотры для чата
@@ -100,7 +98,7 @@ func (p *Provider) Update(up int) {
 		totalUp  int // количество обновленных ссылок
 		errCount int // количество ошибок при обновлении
 	)
-	for totalUp < up || errCount == 10 {
+	for totalUp < up || errCount >= 10 {
 		redditUrls, err := reddit.GetNames(config.HotCategory)
 		if err != nil {
 			log.Println(err.Error())
