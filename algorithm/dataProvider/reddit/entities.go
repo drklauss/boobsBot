@@ -27,4 +27,5 @@ type Children struct {
 type Data struct {
 	Domain string `json:"domain"`
 	Url    string `json:"url"`
+	Name   string `json:"name"`
 }

@@ -13,7 +13,8 @@ import (
 	"github.com/boobsBot/algorithm/config"
 )
 
-var TokenSample TokenResponse
+var tokenSample TokenResponse
+var lastNameId string
 
 // GetNames возвращает названия новых видео
 func GetNames(uType string) ([]string, error) {
@@ -56,7 +57,7 @@ func refreshToken() error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(respBody, &TokenSample)
+	err = json.Unmarshal(respBody, &tokenSample)
 	if err != nil {
 		return err
 	}
@@ -72,8 +73,9 @@ func fetchNames(uType string) ([]string, error) {
 	req, _ := http.NewRequest("GET", config.ApiUrl+config.NSFW+uType, nil)
 	data := req.URL.Query()
 	data.Set("limit", strconv.Itoa(config.UrlsLimit))
+	data.Set("after", lastNameId)
 	req.URL.RawQuery = data.Encode()
-	req.Header.Set("Authorization", "bearer "+TokenSample.Token)
+	req.Header.Set("Authorization", "bearer "+tokenSample.Token)
 	req.Header.Set("User-Agent", config.UserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
@@ -100,6 +102,7 @@ func getOnlyUsefulNames(subResp SubRedditResponse) []string {
 		}
 		namesSlice := strings.Split(child.Data.Url, "/")
 		names = append(names, namesSlice[len(namesSlice)-1])
+		lastNameId = child.Data.Name
 	}
 
 	return names

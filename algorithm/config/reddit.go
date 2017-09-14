@@ -10,5 +10,6 @@ const (
 	Password     = "aL4514209"
 	UserAgent    = "My Boobs Bot"
 	NSFW         = "/r/NSFW_GIF/"
-	UrlsLimit    = 30
+	UrlsLimit    = 50
+	HotCategory  = "hot"
 )

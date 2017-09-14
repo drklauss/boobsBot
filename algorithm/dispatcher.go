@@ -54,11 +54,8 @@ func (d *Dispatcher) handleUpdate(update telegram.Update) {
 	switch command {
 	case config.Hello:
 		telegram.SendMessage(update.Message.Chat.Id, fmt.Sprintf("Well, Hello, %s!", update.Message.From.FirstName))
-	case config.New:
-		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.New))
 	case config.Hot:
-		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.Hot))
-	case config.Top:
-		telegram.SendDocument(update.Message.Chat.Id, d.urlProvider.GetUrl(config.Top))
+		u := d.urlProvider.GetUrl(update.Message.Chat.Id)
+		telegram.SendDocument(update.Message.Chat.Id, u)
 	}
 }
