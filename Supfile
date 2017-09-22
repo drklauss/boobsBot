@@ -1,0 +1,54 @@
+version: 0.4
+
+env:
+  DIR: /opt/boobs_bot
+  DB_NAME: db.sqlite3     # Имя БД
+  SERVICE_NAME: boobs_bot # Имя сервиса
+
+networks:
+  local:
+    hosts:
+      - localhost
+  prod:
+    hosts:
+      - groall@c9333.abcp.ru:22022
+
+commands:
+  deps:
+    desc: Установка зависимостей через glide
+    local: glide install
+  go_build:
+    desc: Сборка
+    local: go build -o ./bin/$SERVICE_NAME main.go
+  # Команды для деплоя не сервере
+  backup_service:
+    desc: Бэкап сервиса
+    run: mkdir -p $DIR/bck/`date +%Y%m%d_%H%M` && cp $DIR/$SERVICE_NAME $DIR/bck/`date +%Y%m%d_%H%M`/$SERVICE_NAME
+  backup_db:
+      desc: Бэкап БД
+      run: cp $DIR/$DB_NAME $DIR/bck/`date +%Y%m%d_%H%M`/$DB_NAME
+  prepare_service:
+    desc: Подготовка сервиса к загрузке
+    local: cp ./bin/$SERVICE_NAME ./$SERVICE_NAME
+  upload_service:
+    desc: Загружаем новую версию сервиса
+    upload:
+      - src: ./$SERVICE_NAME
+        dst: $DIR/
+  upload_db:
+    desc: Загружаем $DB_NAME
+    upload:
+      - src: ./$DB_NAME
+        dst: $DIR/
+  clear_temp_services:
+      desc: Очистка ненужных файлов сервисов
+      local: rm ./$SERVICE_NAME
+
+targets:
+  deploy:
+    - backup_service
+    - backup_db
+    - prepare_service
+    - upload_service
+    - upload_db
+    - clear_temp_services

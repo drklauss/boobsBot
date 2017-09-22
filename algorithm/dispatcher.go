@@ -53,7 +53,7 @@ func (d *Dispatcher) handleUpdate(update telegram.Update) {
 	command := strings.Replace(comName[0], "/", "", -1)
 	switch command {
 	case config.Hello:
-		telegram.SendMessage(update.Message.Chat.Id, fmt.Sprintf("Well, Hello, %s!", update.Message.From.FirstName))
+		telegram.SendMessage(update.Message.Chat.Id, fmt.Sprintf("Hello, %s!", update.Message.From.FirstName))
 	case config.Hot:
 		u := d.urlProvider.GetUrl(update.Message.Chat.Id)
 		telegram.SendDocument(update.Message.Chat.Id, u)
