@@ -8,7 +8,7 @@ import (
 
 	"sync"
 
-	"github.com/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/config"
 )
 
 // ConvertNamesToUrls преобразовывает названия в ссылки

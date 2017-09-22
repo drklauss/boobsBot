@@ -10,7 +10,7 @@ import (
 
 	"strconv"
 
-	"github.com/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/config"
 )
 
 var tokenSample TokenResponse

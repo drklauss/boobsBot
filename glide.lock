@@ -1,5 +1,5 @@
 hash: 47fba60d77b9db089481edc607f814f497f5b4e3cf7eb4197d5cb4f989cf6ca0
-updated: 2017-09-06T14:42:21.96113124+03:00
+updated: 2017-09-22T08:33:03.639546391+03:00
 imports:
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
@@ -12,7 +12,7 @@ imports:
 - name: github.com/PuerkitoBio/goquery
   version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: golang.org/x/net
-  version: 66aacef3dd8a676686c7ae3716979581e8b03c47
+  version: 0744d001aa8470aaa53df28d32e5ceeb8af9bd70
   subpackages:
   - context
 testImports: []

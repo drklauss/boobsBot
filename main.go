@@ -7,9 +7,9 @@ import (
 
 	"flag"
 
-	"github.com/boobsBot/algorithm"
-	"github.com/boobsBot/algorithm/config"
-	"github.com/boobsBot/algorithm/dataProvider"
+	"github.com/drklauss/boobsBot/algorithm"
+	"github.com/drklauss/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider"
 )
 
 func main() {

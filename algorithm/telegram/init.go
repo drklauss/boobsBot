@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/config"
 )
 
 // SendMessage отправляет сообщение в чат

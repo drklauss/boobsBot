@@ -9,10 +9,10 @@ import (
 
 	"strings"
 
-	"github.com/boobsBot/algorithm/config"
-	"github.com/boobsBot/algorithm/dataProvider/gfycat"
-	gorm2 "github.com/boobsBot/algorithm/dataProvider/gorm"
-	"github.com/boobsBot/algorithm/dataProvider/reddit"
+	"github.com/drklauss/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider/gfycat"
+	gorm2 "github.com/drklauss/boobsBot/algorithm/dataProvider/gorm"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider/reddit"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )

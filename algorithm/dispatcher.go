@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/boobsBot/algorithm/config"
-	"github.com/boobsBot/algorithm/dataProvider"
-	"github.com/boobsBot/algorithm/telegram"
+	"github.com/drklauss/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider"
+	"github.com/drklauss/boobsBot/algorithm/telegram"
 )
 
 type Dispatcher struct {
