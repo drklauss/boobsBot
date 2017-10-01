@@ -12,21 +12,24 @@ import (
 	"github.com/drklauss/boobsBot/algorithm/dataProvider"
 )
 
+type Flags struct {
+	update    int
+	statistic string
+}
+
 func main() {
 	logFile, _ := initLogFile()
 	defer logFile.Close()
-
-	var up int
-	flag.IntVar(&up, "u", 0, "Update Links. Example: -u 500 will fetch and save 500 links")
+	var f Flags
+	flag.IntVar(&f.update, "u", 0, "Update Links. Example: -u 500 will fetch and save 500 links")
+	flag.StringVar(&f.statistic, "s", "", "Statistic. Example: -s top will generate top viewers report")
 	flag.Parse()
-	if up > 0 {
-		provider := new(dataProvider.Provider)
-		p := provider.Init()
-		p.Update(up)
+	if useFlags(f) {
 		os.Exit(0)
 	}
-	new(algorithm.Dispatcher).Run()
 
+	// Запуск бота
+	new(algorithm.Dispatcher).Run()
 }
 
 // Инициализация лог-файла
@@ -39,4 +42,23 @@ func initLogFile() (*os.File, error) {
 	log.SetFlags(3)
 	log.Println("-=-=-=-=Bot is starting=-=-=-=-")
 	return file, nil
+}
+
+// Запсукает программу с отдельными флагами
+func useFlags(f Flags) bool {
+	if f.update > 0 {
+		provider := new(dataProvider.Provider)
+		p := provider.Init(true)
+		p.Update(f.update)
+		return true
+	}
+	switch f.statistic {
+	case "top":
+		p := new(dataProvider.Provider).Init(false)
+		b := p.GetTopViewers4Cl()
+		fmt.Printf("\n%s\n", b)
+		return true
+	}
+
+	return false
 }

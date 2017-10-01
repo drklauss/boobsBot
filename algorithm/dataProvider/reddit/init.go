@@ -28,8 +28,8 @@ func GetNames(uType string) ([]string, error) {
 func isGoodToken() bool {
 	isGoodToken := true
 	client := new(http.Client)
-	req, _ := http.NewRequest("GET", config.GetMeUrl, nil)
-	req.Header.Set("User-Agent", config.UserAgent)
+	req, _ := http.NewRequest("GET", config.RdtGetMeUrl, nil)
+	req.Header.Set("User-Agent", config.RdtUserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println(err)
@@ -46,11 +46,11 @@ func refreshToken() error {
 	client := new(http.Client)
 	params := url.Values{}
 	params.Set("grant_type", "password")
-	params.Set("username", config.UserName)
-	params.Set("password", config.Password)
-	req, _ := http.NewRequest("POST", config.GetTokenUrl, strings.NewReader(params.Encode()))
-	req.SetBasicAuth(config.ClientId, config.ClientSecret)
-	req.Header.Set("User-Agent", config.UserAgent)
+	params.Set("username", config.RdtUserName)
+	params.Set("password", config.RdtPassword)
+	req, _ := http.NewRequest("POST", config.RdtGetTokenUrl, strings.NewReader(params.Encode()))
+	req.SetBasicAuth(config.RdtClientId, config.RdtClientSecret)
+	req.Header.Set("User-Agent", config.RdtUserAgent)
 	resp, err := client.Do(req)
 	defer resp.Body.Close()
 	respBody, err := ioutil.ReadAll(resp.Body)
@@ -70,13 +70,13 @@ func fetchNames(uType string) ([]string, error) {
 	var urls []string
 	var err error
 	client := new(http.Client)
-	req, _ := http.NewRequest("GET", config.ApiUrl+config.NSFW+uType, nil)
+	req, _ := http.NewRequest("GET", config.RdtApiUrl+config.RdtNSFW+uType, nil)
 	data := req.URL.Query()
-	data.Set("limit", strconv.Itoa(config.UrlsLimit))
+	data.Set("limit", strconv.Itoa(config.RdtUrlsLimit))
 	data.Set("after", lastNameId)
 	req.URL.RawQuery = data.Encode()
 	req.Header.Set("Authorization", "bearer "+tokenSample.Token)
-	req.Header.Set("User-Agent", config.UserAgent)
+	req.Header.Set("User-Agent", config.RdtUserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
 		return urls, err

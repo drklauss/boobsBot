@@ -13,17 +13,19 @@ import (
 )
 
 type Dispatcher struct {
-	updateResp   []telegram.Update
-	urlProvider  dataProvider.Provider
-	lastUpdateId int
+	upResp    []telegram.Update
+	dataProv  dataProvider.Provider
+	lastUpdId int
 }
 
 // Run запускает бота
 func (d *Dispatcher) Run() {
-	d.urlProvider = new(dataProvider.Provider).Init()
+	d.dataProv = new(dataProvider.Provider).Init(true)
+	d.dataProv.CacheChatIds()
+
 	for {
 		var err error
-		d.updateResp, err = telegram.GetUpdateEntities(d.lastUpdateId)
+		d.upResp, err = telegram.GetUpdateEntities(d.lastUpdId)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -35,27 +37,34 @@ func (d *Dispatcher) Run() {
 
 // Обрабатывает полученные обновления
 func (d *Dispatcher) processUpdates() {
-	upLen := len(d.updateResp)
+	upLen := len(d.upResp)
 	if upLen > 0 {
-		d.lastUpdateId = d.updateResp[upLen-1].UpdateId
+		d.lastUpdId = d.upResp[upLen-1].UpdateId
 		for i := 0; i < upLen; i++ {
-			if time.Now().Unix() > d.updateResp[i].Message.Date+config.TmSkipMessagesTime {
+			if time.Now().Unix() > d.upResp[i].Message.Date+config.TmSkipMessagesTime {
 				continue
 			}
-			d.handleUpdate(d.updateResp[i])
+			d.handleUpdate(d.upResp[i].Message)
 		}
 	}
 }
 
 // Обрабатывет команду
-func (d *Dispatcher) handleUpdate(update telegram.Update) {
-	comName := strings.Split(update.Message.Text, config.TmFullBotName)
+func (d *Dispatcher) handleUpdate(mes telegram.Message) {
+	comName := strings.Split(mes.Text, config.TmFullBotName)
 	command := strings.Replace(comName[0], "/", "", -1)
+	d.dataProv.CreateChatEntry(mes)
 	switch command {
-	case config.Hello:
-		telegram.SendMessage(update.Message.Chat.Id, fmt.Sprintf("Hello, %s!", update.Message.From.FirstName))
-	case config.Hot:
-		u := d.urlProvider.GetUrl(update.Message.Chat.Id)
-		telegram.SendDocument(update.Message.Chat.Id, u)
+	case config.TmHelloCmd:
+		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("Hello, %s!", mes.From.FirstName))
+	case config.TmHotCmd:
+		u := d.dataProv.GetUrl(mes.Chat)
+		telegram.SendDocument(mes.Chat.Id, u)
+	case config.TmTopViewersCmd:
+		if mes.From.Id != config.TmAdminUserId {
+			return
+		}
+		b := d.dataProv.GetTopViewers4Tm()
+		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("%s", b))
 	}
 }

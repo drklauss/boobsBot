@@ -6,9 +6,11 @@ const (
 	TmApiUrl           = "https://api.telegram.org/bot"
 	TmToken            = "425337521:AAGcOjS44c86oAStJdn5xqWOfGcPIBeMiw4"
 	TmFullBotName      = "@DornBot"
-	TmUpdateTime       = 2
-	TmSkipMessagesTime = 60
+	TmUpdateTime       = 1        // Отправка запроса для апдейта
+	TmSkipMessagesTime = 60       // Вычитывает апдейты за указанный промежуток времени
+	TmAdminUserId      = 90310429 // Мой chatId
 	// Комманды бота
-	Hello = "hello"     // Say Hello
-	Hot   = HotCategory // Give me a corn
+	TmHelloCmd      = "hello"        // Say TmHelloCmd
+	TmHotCmd        = RdtHotCategory // Give me a corn
+	TmTopViewersCmd = "topViewers"   // Top Viewers report
 )

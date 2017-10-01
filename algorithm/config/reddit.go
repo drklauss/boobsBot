@@ -1,15 +1,15 @@
 package config
 
 const (
-	GetTokenUrl  = "https://www.reddit.com/api/v1/access_token"
-	GetMeUrl     = "https://www.reddit.com/api/v1/me"
-	ApiUrl       = "https://oauth.reddit.com"
-	ClientId     = "hmOdEs1gOvXN4w"
-	ClientSecret = "VwJV78wGCMGD2pvNQGyeaDHlzlk"
-	UserName     = "dr_klauss"
-	Password     = "aL4514209"
-	UserAgent    = "My Boobs Bot"
-	NSFW         = "/r/NSFW_GIF/"
-	UrlsLimit    = 50
-	HotCategory  = "hot"
+	RdtGetTokenUrl  = "https://www.reddit.com/api/v1/access_token"
+	RdtGetMeUrl     = "https://www.reddit.com/api/v1/me"
+	RdtApiUrl       = "https://oauth.reddit.com"
+	RdtClientId     = "hmOdEs1gOvXN4w"
+	RdtClientSecret = "VwJV78wGCMGD2pvNQGyeaDHlzlk"
+	RdtUserName     = "dr_klauss"
+	RdtPassword     = "aL4514209"
+	RdtUserAgent    = "My Boobs Bot"
+	RdtNSFW         = "/r/NSFW_GIF/"
+	RdtUrlsLimit    = 50
+	RdtHotCategory  = "hot"
 )
