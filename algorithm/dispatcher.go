@@ -15,6 +15,7 @@ import (
 type Dispatcher struct {
 	upResp    []telegram.Update
 	dataProv  dataProvider.Provider
+	debug     bool
 	lastUpdId int
 }
 
@@ -54,6 +55,9 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 	comName := strings.Split(mes.Text, config.TmFullBotName)
 	command := strings.Replace(comName[0], "/", "", -1)
 	d.dataProv.CreateChatEntry(mes)
+	if d.isDebug(mes.From.Id) {
+		return
+	}
 	switch command {
 	case config.TmHelloCmd:
 		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("Hello, %s!", mes.From.FirstName))
@@ -61,10 +65,23 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		u := d.dataProv.GetUrl(mes.Chat)
 		telegram.SendDocument(mes.Chat.Id, u)
 	case config.TmTopViewersCmd:
-		if mes.From.Id != config.TmAdminUserId {
+		if mes.From.Id != config.TmDevUserId {
 			return
 		}
 		b := d.dataProv.GetTopViewers4Tm()
 		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("%s", b))
+	case config.TmDebugStartCmd:
+		d.debug = true
+	case config.TmDebugEndCmd:
+		d.debug = false
 	}
+}
+
+// Проверяет включен ли дебаг для разработчика
+func (d *Dispatcher) isDebug(userId int) bool {
+	if d.debug && userId == config.TmDevUserId {
+		return true
+	}
+
+	return false
 }
