@@ -55,7 +55,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 	comName := strings.Split(mes.Text, config.TmFullBotName)
 	command := strings.Replace(comName[0], "/", "", -1)
 	d.dataProv.CreateChatEntry(mes)
-	if d.isDebug(mes.From.Id) {
+	if d.isDebug(mes.From.Id, command) {
 		return
 	}
 	switch command {
@@ -70,18 +70,21 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		}
 		b := d.dataProv.GetTopViewers4Tm()
 		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("%s", b))
+
+	}
+}
+
+// Проверяет включен ли дебаг для разработчика
+func (d *Dispatcher) isDebug(userId int, com string) bool {
+	if userId != config.TmDevUserId {
+		return false
+	}
+	switch com {
 	case config.TmDebugStartCmd:
 		d.debug = true
 	case config.TmDebugEndCmd:
 		d.debug = false
 	}
-}
 
-// Проверяет включен ли дебаг для разработчика
-func (d *Dispatcher) isDebug(userId int) bool {
-	if d.debug && userId == config.TmDevUserId {
-		return true
-	}
-
-	return false
+	return d.debug
 }
