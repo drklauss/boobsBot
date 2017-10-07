@@ -21,6 +21,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
+const getUpdates = 100
+
 // Класс является черным ящиком для получения данных из БД
 type Provider struct {
 	db             *gorm.DB
@@ -59,19 +61,19 @@ func (p *Provider) CacheChatIds() {
 }
 
 // Возвращает один URL гифки, пишем в стату просмотр
-func (p *Provider) GetUrl(chat telegram.Chat) string {
+func (p *Provider) GetUrl(chat telegram.Chat) dbEntities.Url {
 	u, err := p.getOneUrl(chat.Id)
 	if err != nil {
 		log.Println(err)
 	}
 	go p.createViewEntry(chat.Id, u.Id)
 
-	return u.Value
+	return u
 }
 
 // Обновляет URLs
-func (p *Provider) Update(up int) {
-	log.Printf("Starting update for %d urls", up)
+func (p *Provider) UpdateVideoUrls() {
+	log.Printf("Starting update for %d urls", 100)
 	if p.totalUrlsCount == 0 {
 		p.totalUrlsCount = p.getTotalEntriesCount()
 	}
@@ -79,7 +81,7 @@ func (p *Provider) Update(up int) {
 		totalUp  int // количество обновленных ссылок
 		errCount int // количество ошибок при обновлении
 	)
-	for totalUp < up || errCount >= 10 {
+	for totalUp < getUpdates || errCount >= 10 {
 		redditUrls, err := reddit.GetNames(config.RdtHotCategory)
 		if err != nil {
 			log.Println(err.Error())
@@ -178,23 +180,23 @@ func (p *Provider) getOneUrl(chatId int) (dbEntities.Url, error) {
 }
 
 // Сохраняет данные в БД
-func (p *Provider) saveUrls(urls []string) {
+func (p *Provider) saveUrls(urls []gfycat.GfyItem) {
 	insertStr := p.prepareInsertString(urls)
-	sql := fmt.Sprintf("INSERT OR IGNORE INTO \"Urls\" (\"value\", \"urlHash\") VALUES %s", insertStr)
+	sql := fmt.Sprintf("INSERT OR IGNORE INTO \"Urls\" (\"value\", \"urlHash\", \"caption\") VALUES %s", insertStr)
 	p.db.Exec(sql)
 }
 
 // Подготавливяет строку для INSERT
-func (p *Provider) prepareInsertString(urls []string) string {
+func (p *Provider) prepareInsertString(gfyItems []gfycat.GfyItem) string {
 	var values []string
-	for _, v := range urls {
-		if v == "" {
+	for _, item := range gfyItems {
+		if item.MobileUrl == "" {
 			continue
 		}
 		hasher := md5.New()
-		hasher.Write([]byte(v))
+		hasher.Write([]byte(item.MobileUrl))
 		md := hasher.Sum(nil)
-		values = append(values, fmt.Sprintf("(\"%s\", \"%s\")", v, fmt.Sprintf("%x", md)))
+		values = append(values, fmt.Sprintf("(\"%s\", \"%x\", \"%s\")", item.MobileUrl, md, item.GfyName))
 	}
 
 	return strings.Join(values, ",")

@@ -3,6 +3,7 @@ package dbEntities
 type Url struct {
 	Id      int    `gorm:"primary_key;column:id"`
 	Value   string `gorm:"column:value"`
+	Caption string `gorm:"column:caption"`
 	UrlHash string `gorm:"column:urlHash"`
 }
 

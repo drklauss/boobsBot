@@ -13,7 +13,7 @@ import (
 )
 
 type Flags struct {
-	update    int
+	update    bool
 	statistic string
 }
 
@@ -21,7 +21,7 @@ func main() {
 	logFile, _ := initLogFile()
 	defer logFile.Close()
 	var f Flags
-	flag.IntVar(&f.update, "u", 0, "Update Links. Example: -u 500 will fetch and save 500 links")
+	flag.BoolVar(&f.update, "u", false, "UpdateVideoUrls Links. For each loop fetches 100 videos")
 	flag.StringVar(&f.statistic, "s", "", "Statistic. Example: -s top will generate top viewers report")
 	flag.Parse()
 	if useFlags(f) {
@@ -46,10 +46,10 @@ func initLogFile() (*os.File, error) {
 
 // Запсукает программу с отдельными флагами
 func useFlags(f Flags) bool {
-	if f.update > 0 {
+	if f.update {
 		provider := new(dataProvider.Provider)
 		p := provider.Init(true)
-		p.Update(f.update)
+		p.UpdateVideoUrls()
 		return true
 	}
 	switch f.statistic {

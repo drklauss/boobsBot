@@ -5,4 +5,5 @@ type Response struct {
 }
 type GfyItem struct {
 	MobileUrl string `json:"mobileUrl"`
+	GfyName   string `json:"gfyName"`
 }

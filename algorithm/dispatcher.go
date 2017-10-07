@@ -60,17 +60,43 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 	}
 	switch command {
 	case config.TmHelloCmd:
-		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("Hello, %s!", mes.From.FirstName))
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			Text:           "Hello",
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+		}
+		telegram.SendMessage(mes)
 	case config.TmHotCmd:
 		u := d.dataProv.GetUrl(mes.Chat)
-		telegram.SendDocument(mes.Chat.Id, u)
+		doc := telegram.DocumentSend{
+			ChatId:  mes.Chat.Id,
+			Caption: u.Caption,
+			KeyboardMarkup:telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+			Url:     u.Value,
+		}
+		telegram.SendDocument(doc)
+	// =-_-= Админские команды =-_-=
 	case config.TmTopViewersCmd:
 		if mes.From.Id != config.TmDevUserId {
 			return
 		}
 		b := d.dataProv.GetTopViewers4Tm()
-		telegram.SendMessage(mes.Chat.Id, fmt.Sprintf("%s", b))
-
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			Text:           fmt.Sprintf("%s", b),
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+		}
+		telegram.SendMessage(mes)
+	case config.TmReports:
+		if mes.From.Id != config.TmDevUserId {
+			return
+		}
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			KeyboardMarkup: d.getReportKeyboard(),
+			Text:           fmt.Sprintf("Hello, %s!", mes.From.FirstName),
+		}
+		telegram.SendMessage(mes)
 	}
 }
 
@@ -87,4 +113,21 @@ func (d *Dispatcher) isDebug(userId int, com string) bool {
 	}
 
 	return d.debug
+}
+
+func (d *Dispatcher) getReportKeyboard() telegram.ReplyKeyboardMarkup {
+	btn := telegram.KeyboardButton{
+		Text:            config.TmTopViewersCmd,
+		RequestContact:  false,
+		RequestLocation: false,
+	}
+	btns := []telegram.KeyboardButton{btn}
+	keyboards := [][]telegram.KeyboardButton{btns}
+	rm := telegram.ReplyKeyboardMarkup{
+		Keyboard:        keyboards,
+		OneTimeKeyboard: true,
+		ResizeKeyboard:  true,
+		Selective:       false,
+	}
+	return rm
 }

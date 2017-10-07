@@ -10,9 +10,10 @@ const (
 	TmSkipMessagesTime = 60       // Вычитывает апдейты за указанный промежуток времени
 	TmDevUserId        = 90310429 // Мой userId
 	// Комманды бота
-	TmHelloCmd      = "hello"        // Команда приветствия
-	TmHotCmd        = RdtHotCategory // Команда получения порновидосика
-	TmTopViewersCmd = "topViewers"   // Команда получения отчета топ-зрителей
-	TmDebugStartCmd = "debugStart"   // Команда включения режима отладки
-	TmDebugEndCmd   = "debugStop"    // Команда выключения режима отладки
+	TmHelloCmd      = "hello"                        // Команда приветствия
+	TmHotCmd        = RdtHotCategory                 // Команда получения порновидосика
+	TmDebugStartCmd = "debugStart"                   // Команда включения режима отладки
+	TmDebugEndCmd   = "debugStop"                    // Команда выключения режима отладки
+	TmReports       = "reports"                      // Команда получения отчетов
+	TmTopViewersCmd = "\xF0\x9F\x93\x8A Top Viewers" // Команда получения отчета топ-зрителей
 )

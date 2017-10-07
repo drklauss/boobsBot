@@ -9,16 +9,20 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
+	"fmt"
+
 	"github.com/drklauss/boobsBot/algorithm/config"
 )
 
 // SendMessage отправляет сообщение в чат
-func SendMessage(chatId int, text string) {
+func SendMessage(mes MessageSend) {
 	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/sendMessage"
 	params := url.Values{}
-	params.Set("chat_id", strconv.Itoa(chatId))
-	params.Set("text", text)
+	params.Set("chat_id", strconv.Itoa(mes.ChatId))
+	params.Set("text", mes.Text)
+	b, _ := json.Marshal(mes.KeyboardMarkup)
+	params.Set("reply_markup", fmt.Sprintf("%s", b))
 	u.RawQuery = params.Encode()
 	_, err := http.Get(u.String())
 	if err != nil {
@@ -27,12 +31,15 @@ func SendMessage(chatId int, text string) {
 }
 
 // SendDocument отправляет документ в чат
-func SendDocument(chatId int, docUrl string) {
+func SendDocument(doc DocumentSend) {
 	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/sendDocument"
 	params := url.Values{}
-	params.Set("chat_id", strconv.Itoa(chatId))
-	params.Set("document", docUrl)
+	params.Set("chat_id", strconv.Itoa(doc.ChatId))
+	params.Set("document", doc.Url)
+	params.Set("caption", doc.Caption)
+	b, _ := json.Marshal(doc.KeyboardMarkup)
+	params.Set("reply_markup", fmt.Sprintf("%s", b))
 	u.RawQuery = params.Encode()
 	_, err := http.Get(u.String())
 	if err != nil {

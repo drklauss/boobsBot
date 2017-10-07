@@ -12,8 +12,8 @@ import (
 )
 
 // ConvertNamesToUrls преобразовывает названия в ссылки
-func ConvertNamesToUrls(names []string) ([]string, error) {
-	var validUrls []string
+func ConvertNamesToUrls(names []string) ([]GfyItem, error) {
+	var gfyItems []GfyItem
 	mutex := sync.Mutex{}
 	gfyCh := make(chan GfyItem, config.Threads)
 	namesCh := make(chan string, len(names))
@@ -27,14 +27,13 @@ func ConvertNamesToUrls(names []string) ([]string, error) {
 	close(namesCh)
 
 	for a := 0; a < len(names); a++ {
-		gfy := <-gfyCh
 		mutex.Lock()
-		validUrls = append(validUrls, gfy.MobileUrl)
+		gfyItems = append(gfyItems, <-gfyCh)
 		mutex.Unlock()
 	}
 	close(gfyCh)
 
-	return validUrls, nil
+	return gfyItems, nil
 }
 
 func gfyWorker(namesCh <-chan string, gfyCh chan<- GfyItem) {
