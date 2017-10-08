@@ -11,7 +11,8 @@ const (
 	TmDevUserId        = 90310429 // Мой userId
 	// Комманды бота
 	TmHelloCmd      = "hello"                        // Команда приветствия
-	TmHotCmd        = RdtHotCategory                 // Команда получения порновидосика
+	TmNSFWVideo     = "nsfw_mp4"                     // Команда получения nsfw видео
+	TmRealGirls     = "real_girls"                   // Команда получения item по тегу real girls
 	TmDebugStartCmd = "debugStart"                   // Команда включения режима отладки
 	TmDebugEndCmd   = "debugStop"                    // Команда выключения режима отладки
 	TmReports       = "reports"                      // Команда получения отчетов

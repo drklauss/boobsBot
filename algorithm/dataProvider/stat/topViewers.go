@@ -53,7 +53,6 @@ func (p *ReportGenerator) GetTopViewers(format int) []byte {
 		for k, v := range tVs {
 			s := fmt.Sprintf("%d. %s (%s) -- %d \n", k+1, v.Title, v.Type, v.Count)
 			buf.WriteString(s)
-
 		}
 	}
 

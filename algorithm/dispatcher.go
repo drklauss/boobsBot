@@ -66,7 +66,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 		}
 		telegram.SendMessage(mes)
-	case config.TmHotCmd:
+	case config.TmNSFWVideo:
 		u := d.dataProv.GetUrl(mes.Chat)
 		doc := telegram.DocumentSend{
 			ChatId:  mes.Chat.Id,

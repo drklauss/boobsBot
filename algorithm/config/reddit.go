@@ -9,7 +9,6 @@ const (
 	RdtUserName     = "dr_klauss"
 	RdtPassword     = "aL4514209"
 	RdtUserAgent    = "My Boobs Bot"
-	RdtNSFW         = "/r/NSFW_GIF/"
+	RdtNSFWHot      = "/r/NSFW_GIF/hot"
 	RdtUrlsLimit    = 50
-	RdtHotCategory  = "hot"
 )

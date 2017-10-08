@@ -30,3 +30,10 @@ func (View) TableName() string {
 func (Chat) TableName() string {
 	return "Chats"
 }
+
+//
+type UrlGetter interface {
+	GetValue() string
+	GetCaption() string
+	GetCategoryId() string
+}

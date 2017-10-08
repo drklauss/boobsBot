@@ -16,12 +16,17 @@ import (
 var tokenSample TokenResponse
 var lastNameId string
 
-// GetNames возвращает названия новых видео
-func GetNames(uType string) ([]string, error) {
+// GetVideoTitles возвращает названия новых видео
+func GetVideoTitles(uType string) ([]string, error) {
 	if !isGoodToken() {
 		refreshToken()
 	}
-	return fetchNames(uType)
+	subResp, err := fetchRdtResp(uType)
+	if err != nil {
+		return []string{}, err
+	}
+
+	return getOnlyUsefulNames(subResp), nil
 }
 
 // Проверяет действителен ли токен
@@ -65,12 +70,11 @@ func refreshToken() error {
 	return nil
 }
 
-// Возвращает названия новых видео по типу
-func fetchNames(uType string) ([]string, error) {
-	var urls []string
+// Возвращает SubRedditResponse
+func fetchRdtResp(uType string) (SubRedditResponse, error) {
 	var err error
 	client := new(http.Client)
-	req, _ := http.NewRequest("GET", config.RdtApiUrl+config.RdtNSFW+uType, nil)
+	req, _ := http.NewRequest("GET", config.RdtApiUrl+uType, nil)
 	data := req.URL.Query()
 	data.Set("limit", strconv.Itoa(config.RdtUrlsLimit))
 	data.Set("after", lastNameId)
@@ -79,18 +83,17 @@ func fetchNames(uType string) ([]string, error) {
 	req.Header.Set("User-Agent", config.RdtUserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
-		return urls, err
+		return SubRedditResponse{}, err
 	}
 	defer resp.Body.Close()
 	respBody, _ := ioutil.ReadAll(resp.Body)
 	var subResp SubRedditResponse
 	err = json.Unmarshal(respBody, &subResp)
 	if err != nil {
-		return urls, err
+		return SubRedditResponse{}, err
 	}
-	urls = getOnlyUsefulNames(subResp)
 
-	return urls, nil
+	return subResp, nil
 }
 
 // Возвращает только названия видео с gfycat

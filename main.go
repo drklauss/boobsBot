@@ -21,7 +21,7 @@ func main() {
 	logFile, _ := initLogFile()
 	defer logFile.Close()
 	var f Flags
-	flag.BoolVar(&f.update, "u", false, "UpdateVideoUrls Links. For each loop fetches 100 videos")
+	flag.BoolVar(&f.update, "u", false, "updateVideoItems Links. For each loop fetches 100 videos")
 	flag.StringVar(&f.statistic, "s", "", "Statistic. Example: -s top will generate top viewers report")
 	flag.Parse()
 	if useFlags(f) {
@@ -49,7 +49,7 @@ func useFlags(f Flags) bool {
 	if f.update {
 		provider := new(dataProvider.Provider)
 		p := provider.Init(true)
-		p.UpdateVideoUrls()
+		p.UpdateAll()
 		return true
 	}
 	switch f.statistic {

@@ -5,10 +5,6 @@ import (
 
 	"fmt"
 
-	"crypto/md5"
-
-	"strings"
-
 	"time"
 
 	"github.com/drklauss/boobsBot/algorithm/config"
@@ -71,37 +67,10 @@ func (p *Provider) GetUrl(chat telegram.Chat) dbEntities.Url {
 	return u
 }
 
-// Обновляет URLs
-func (p *Provider) UpdateVideoUrls() {
-	log.Printf("Starting update for %d urls", 100)
-	if p.totalUrlsCount == 0 {
-		p.totalUrlsCount = p.getTotalEntriesCount()
-	}
-	var (
-		totalUp  int // количество обновленных ссылок
-		errCount int // количество ошибок при обновлении
-	)
-	for totalUp < getUpdates || errCount >= 10 {
-		redditUrls, err := reddit.GetNames(config.RdtHotCategory)
-		if err != nil {
-			log.Println(err.Error())
-			errCount++
-		}
-		if len(redditUrls) == 0 {
-			log.Println("There is no urls")
-			break
-		}
-		convertedUrls, err := gfycat.ConvertNamesToUrls(redditUrls)
-		if err != nil {
-			log.Println(err.Error())
-			errCount++
-		}
-		p.saveUrls(convertedUrls)
-		afterInsertCount := p.getTotalEntriesCount()
-		totalUp += afterInsertCount - p.totalUrlsCount
-		p.totalUrlsCount = afterInsertCount
-	}
-	log.Printf("Updated %d urls", totalUp)
+// Обновляет video items
+func (p *Provider) UpdateAll() {
+	p.updateVideoItems()
+	p.updateImageItems(config.TmRealGirls)
 }
 
 // GetTopViewers4Tm запрашивает TopViewers отчет отформатированный для Telegram
@@ -158,7 +127,7 @@ func (p *Provider) clearChatViews(chatId int) error {
 
 // Возвращает одну ссылку
 func (p *Provider) getOneUrl(chatId int) (dbEntities.Url, error) {
-	var url dbEntities.Url
+	var u dbEntities.Url
 	sql := fmt.Sprintf(`
 	SELECT *
 	FROM Urls
@@ -170,39 +139,16 @@ func (p *Provider) getOneUrl(chatId int) (dbEntities.Url, error) {
 		WHERE v.chatId = %d)
 	ORDER BY RANDOM()
 	LIMIT 1`, chatId)
-	err := p.db.Raw(sql).Scan(&url).Error
+	err := p.db.Raw(sql).Scan(&u).Error
 	if err == gorm.ErrRecordNotFound {
 		p.clearChatViews(chatId)
-		url, err = p.getOneUrl(chatId)
+		u, err = p.getOneUrl(chatId)
 	}
 
-	return url, err
+	return u, err
 }
 
-// Сохраняет данные в БД
-func (p *Provider) saveUrls(urls []gfycat.GfyItem) {
-	insertStr := p.prepareInsertString(urls)
-	sql := fmt.Sprintf("INSERT OR IGNORE INTO \"Urls\" (\"value\", \"urlHash\", \"caption\") VALUES %s", insertStr)
-	p.db.Exec(sql)
-}
-
-// Подготавливяет строку для INSERT
-func (p *Provider) prepareInsertString(gfyItems []gfycat.GfyItem) string {
-	var values []string
-	for _, item := range gfyItems {
-		if item.MobileUrl == "" {
-			continue
-		}
-		hasher := md5.New()
-		hasher.Write([]byte(item.MobileUrl))
-		md := hasher.Sum(nil)
-		values = append(values, fmt.Sprintf("(\"%s\", \"%x\", \"%s\")", item.MobileUrl, md, item.GfyName))
-	}
-
-	return strings.Join(values, ",")
-}
-
-// Возарвщает общее количество записей в таблице Urls
+// Возвращает общее количество записей в таблице Urls
 func (p *Provider) getTotalEntriesCount() int {
 	var count int
 	p.db.Table("Urls").Count(&count)
