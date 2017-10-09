@@ -27,5 +27,19 @@ type Children struct {
 type Data struct {
 	Domain string `json:"domain"`
 	Url    string `json:"url"`
-	Name   string `json:"name"`
+	Name   string `json:"name"`  // Используется при вытаскивания с gfycat
+	Title  string `json:"title"` // Используется для именования картинок
+}
+
+type ImageItem struct {
+	UrlValue string
+	Caption   string
+}
+
+func (item *ImageItem) GetValue() string {
+	return item.UrlValue
+}
+
+func (item *ImageItem) GetCaption() string {
+	return item.Caption
 }

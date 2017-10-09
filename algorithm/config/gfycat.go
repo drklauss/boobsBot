@@ -3,5 +3,6 @@ package config
 const (
 	GfycatUrl    = "https://gfycat.com/cajax/get/"
 	GfycatDomain = "gfycat.com"
-	Threads = 5
+	ImgurDomain  = "i.imgur.com"
+	Threads      = 5
 )

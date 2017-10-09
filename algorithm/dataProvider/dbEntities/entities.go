@@ -35,5 +35,4 @@ func (Chat) TableName() string {
 type UrlGetter interface {
 	GetValue() string
 	GetCaption() string
-	GetCategoryId() string
 }

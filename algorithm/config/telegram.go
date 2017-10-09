@@ -10,9 +10,10 @@ const (
 	TmSkipMessagesTime = 60       // Вычитывает апдейты за указанный промежуток времени
 	TmDevUserId        = 90310429 // Мой userId
 	// Комманды бота
+	TmNSFWCmd       = "nsfw"                         // Команда получения nsfw
+	TmRealGirlsCmd  = "real_girls"                   // Команда получения item по тегу real girls
+	TmCeleb         = "celeb_nsfw"                   // Команда получения item по тегу real celebnsfw
 	TmHelloCmd      = "hello"                        // Команда приветствия
-	TmNSFWVideo     = "nsfw_mp4"                     // Команда получения nsfw видео
-	TmRealGirls     = "real_girls"                   // Команда получения item по тегу real girls
 	TmDebugStartCmd = "debugStart"                   // Команда включения режима отладки
 	TmDebugEndCmd   = "debugStop"                    // Команда выключения режима отладки
 	TmReports       = "reports"                      // Команда получения отчетов

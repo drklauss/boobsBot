@@ -10,5 +10,7 @@ const (
 	RdtPassword     = "aL4514209"
 	RdtUserAgent    = "My Boobs Bot"
 	RdtNSFWHot      = "/r/NSFW_GIF/hot"
+	RdtRealGirlsHot = "/r/RealGirls/hot"
+	RdtCelebHot     = "/r/celebnsfw/hot"
 	RdtUrlsLimit    = 50
 )

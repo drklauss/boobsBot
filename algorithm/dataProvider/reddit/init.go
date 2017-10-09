@@ -10,23 +10,41 @@ import (
 
 	"strconv"
 
+	"fmt"
+
 	"github.com/drklauss/boobsBot/algorithm/config"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider/dbEntities"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider/gfycat"
 )
 
-var tokenSample TokenResponse
-var lastNameId string
+var (
+	tokenSample TokenResponse
+	lastNameId  string
+)
 
-// GetVideoTitles возвращает названия новых видео
-func GetVideoTitles(uType string) ([]string, error) {
+// GetItems возвращает срез ImageItems
+func GetItems(uType string) ([]dbEntities.Url, error) {
 	if !isGoodToken() {
 		refreshToken()
 	}
 	subResp, err := fetchRdtResp(uType)
 	if err != nil {
-		return []string{}, err
+		return []dbEntities.Url{}, err
+	}
+	gfyUrls, imgurItems := sortUrls(subResp)
+	gfyItems, err := gfycat.ConvertNamesToUrls(gfyUrls)
+	if err != nil {
+		return []dbEntities.Url{}, err
+	}
+	for _, gfyItem := range gfyItems {
+		item := dbEntities.Url{
+			Value:   gfyItem.MobileUrl,
+			Caption: gfyItem.GfyName,
+		}
+		imgurItems = append(imgurItems, item)
 	}
 
-	return getOnlyUsefulNames(subResp), nil
+	return imgurItems, nil
 }
 
 // Проверяет действителен ли токен
@@ -96,17 +114,27 @@ func fetchRdtResp(uType string) (SubRedditResponse, error) {
 	return subResp, nil
 }
 
-// Возвращает только названия видео с gfycat
-func getOnlyUsefulNames(subResp SubRedditResponse) []string {
-	var names []string
+// Сортирует по картинкам и видосикам
+func sortUrls(subResp SubRedditResponse) ([]string, []dbEntities.Url) {
+	var (
+		gfyUrls []string
+		items   []dbEntities.Url
+	)
 	for _, child := range subResp.Data.Children {
-		if child.Data.Domain != config.GfycatDomain {
-			continue
+		if child.Data.Domain == config.GfycatDomain {
+			namesSlice := strings.Split(child.Data.Url, "/")
+			gfyUrls = append(gfyUrls, namesSlice[len(namesSlice)-1])
 		}
-		namesSlice := strings.Split(child.Data.Url, "/")
-		names = append(names, namesSlice[len(namesSlice)-1])
+		if child.Data.Domain == config.ImgurDomain {
+			item := dbEntities.Url{
+				Value:   child.Data.Url,
+				Caption: child.Data.Title,
+			}
+			items = append(items, item)
+		}
 		lastNameId = child.Data.Name
+		fmt.Printf("%+v\n", lastNameId)
 	}
 
-	return names
+	return gfyUrls, items
 }

@@ -9,24 +9,19 @@ import (
 
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/dbEntities"
-	"github.com/drklauss/boobsBot/algorithm/dataProvider/gfycat"
-	"github.com/drklauss/boobsBot/algorithm/dataProvider/reddit"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/stat"
 	"github.com/drklauss/boobsBot/algorithm/telegram"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
-const getUpdates = 100
-
 // Класс является черным ящиком для получения данных из БД
 type Provider struct {
-	db             *gorm.DB
-	totalUrlsCount int
-	cacheIds       []int
+	db       *gorm.DB
+	cacheIds []int
 }
 
-// Init инициализирует провайдер
+// Run инициализирует провайдер
 func (p *Provider) Init(logSql bool) Provider {
 
 	db, err := gorm.Open("sqlite3", config.DbFileName)
@@ -67,10 +62,12 @@ func (p *Provider) GetUrl(chat telegram.Chat) dbEntities.Url {
 	return u
 }
 
-// Обновляет video items
+// Обновляет данные
 func (p *Provider) UpdateAll() {
-	p.updateVideoItems()
-	p.updateImageItems(config.TmRealGirls)
+	updater := new(ItemUpdater)
+	updater.Run(p.db, config.TmNSFWCmd)
+	updater.Run(p.db, config.TmRealGirlsCmd)
+	updater.Run(p.db, config.TmCeleb)
 }
 
 // GetTopViewers4Tm запрашивает TopViewers отчет отформатированный для Telegram
@@ -113,10 +110,10 @@ func (p *Provider) CreateChatEntry(mes telegram.Message) {
 		}
 		p.db.Create(c)
 	}
-
 }
 
 // Очищает просмотры для чата
+// TODO чистка с учетом категории
 func (p *Provider) clearChatViews(chatId int) error {
 	err := p.db.Where("chatId = ?", chatId).
 		Delete(dbEntities.View{}).
@@ -126,6 +123,7 @@ func (p *Provider) clearChatViews(chatId int) error {
 }
 
 // Возвращает одну ссылку
+// TODO правильное получение по категории
 func (p *Provider) getOneUrl(chatId int) (dbEntities.Url, error) {
 	var u dbEntities.Url
 	sql := fmt.Sprintf(`
@@ -146,12 +144,4 @@ func (p *Provider) getOneUrl(chatId int) (dbEntities.Url, error) {
 	}
 
 	return u, err
-}
-
-// Возвращает общее количество записей в таблице Urls
-func (p *Provider) getTotalEntriesCount() int {
-	var count int
-	p.db.Table("Urls").Count(&count)
-
-	return count
 }
