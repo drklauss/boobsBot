@@ -51,9 +51,9 @@ func (p *Provider) CacheChatIds() {
 	}
 }
 
-// Возвращает один URL гифки, пишем в стату просмотр
-func (p *Provider) GetUrl(chat telegram.Chat) dbEntities.Url {
-	u, err := p.getOneUrl(chat.Id)
+// Возвращает один URL по категории, пишем в стату просмотр
+func (p *Provider) GetUrl(chat telegram.Chat, cat string) dbEntities.Url {
+	u, err := p.getOneUrl(chat.Id, cat)
 	if err != nil {
 		log.Println(err)
 	}
@@ -113,34 +113,37 @@ func (p *Provider) CreateChatEntry(mes telegram.Message) {
 }
 
 // Очищает просмотры для чата
-// TODO чистка с учетом категории
-func (p *Provider) clearChatViews(chatId int) error {
-	err := p.db.Where("chatId = ?", chatId).
-		Delete(dbEntities.View{}).
-		Error
+func (p *Provider) clearChatViews(chatId int, cat string) error {
+	sql := fmt.Sprintf(`
+	DELETE FROM Views
+	WHERE Views.urlId IN (
+		SELECT u.id FROM Urls AS u
+		INNER JOIN Views AS v ON u.id = v.urlId
+		WHERE u.category = "%s" AND v.chatId = %d
+	)`, cat, chatId)
+	err := p.db.Exec(sql).Error
 
 	return err
 }
 
 // Возвращает одну ссылку
-// TODO правильное получение по категории
-func (p *Provider) getOneUrl(chatId int) (dbEntities.Url, error) {
+func (p *Provider) getOneUrl(chatId int, cat string) (dbEntities.Url, error) {
 	var u dbEntities.Url
 	sql := fmt.Sprintf(`
 	SELECT *
 	FROM Urls
-	WHERE id NOT IN
+	WHERE category="%s" AND id NOT IN
 		(SELECT u.id
 		FROM Urls as u
 		LEFT JOIN Views as v
 			ON v.urlId = u.id
 		WHERE v.chatId = %d)
 	ORDER BY RANDOM()
-	LIMIT 1`, chatId)
+	LIMIT 1`, cat, chatId)
 	err := p.db.Raw(sql).Scan(&u).Error
 	if err == gorm.ErrRecordNotFound {
-		p.clearChatViews(chatId)
-		u, err = p.getOneUrl(chatId)
+		p.clearChatViews(chatId, cat)
+		u, err = p.getOneUrl(chatId, cat)
 	}
 
 	return u, err

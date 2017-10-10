@@ -69,13 +69,32 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 	case config.TmNSFWCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmNSFWCmd)
 		doc := telegram.DocumentSend{
-			ChatId:  mes.Chat.Id,
-			Caption: u.Caption,
-			KeyboardMarkup:telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
-			Url:     u.Value,
+			ChatId:         mes.Chat.Id,
+			Caption:        u.Caption,
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+			Url:            u.Value,
+		}
+		fmt.Printf("%+v\n", doc)
+		telegram.SendDocument(doc)
+	case config.TmRealGirlsCmd:
+		u := d.dataProv.GetUrl(mes.Chat, config.TmRealGirlsCmd)
+		doc := telegram.DocumentSend{
+			ChatId:         mes.Chat.Id,
+			Caption:        u.Caption,
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+			Url:            u.Value,
 		}
 		telegram.SendDocument(doc)
-	// =-_-= Админские команды =-_-=
+	case config.TmCelebCmd:
+		u := d.dataProv.GetUrl(mes.Chat, config.TmCelebCmd)
+		doc := telegram.DocumentSend{
+			ChatId:         mes.Chat.Id,
+			Caption:        u.Caption,
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+			Url:            u.Value,
+		}
+		telegram.SendDocument(doc)
+		// =-_-= Админские команды =-_-=
 	case config.TmAdmin:
 		if mes.From.Id != config.TmDevUserId {
 			return
