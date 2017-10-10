@@ -22,6 +22,10 @@ var (
 	lastNameId  string
 )
 
+func ClearLastId() {
+	lastNameId = ""
+}
+
 // GetItems возвращает срез ImageItems
 func GetItems(uType string) ([]dbEntities.Url, error) {
 	if !isGoodToken() {

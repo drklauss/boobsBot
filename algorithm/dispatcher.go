@@ -67,7 +67,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		}
 		telegram.SendMessage(mes)
 	case config.TmNSFWCmd:
-		u := d.dataProv.GetUrl(mes.Chat)
+		u := d.dataProv.GetUrl(mes.Chat, config.TmNSFWCmd)
 		doc := telegram.DocumentSend{
 			ChatId:  mes.Chat.Id,
 			Caption: u.Caption,
@@ -76,6 +76,16 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		}
 		telegram.SendDocument(doc)
 	// =-_-= Админские команды =-_-=
+	case config.TmAdmin:
+		if mes.From.Id != config.TmDevUserId {
+			return
+		}
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			KeyboardMarkup: d.getAdminKeyboard(),
+			Text:           fmt.Sprintf("Hello, %s!", mes.From.FirstName),
+		}
+		telegram.SendMessage(mes)
 	case config.TmTopViewersCmd:
 		if mes.From.Id != config.TmDevUserId {
 			return
@@ -85,16 +95,6 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			ChatId:         mes.Chat.Id,
 			Text:           fmt.Sprintf("%s", b),
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
-		}
-		telegram.SendMessage(mes)
-	case config.TmReports:
-		if mes.From.Id != config.TmDevUserId {
-			return
-		}
-		mes := telegram.MessageSend{
-			ChatId:         mes.Chat.Id,
-			KeyboardMarkup: d.getReportKeyboard(),
-			Text:           fmt.Sprintf("Hello, %s!", mes.From.FirstName),
 		}
 		telegram.SendMessage(mes)
 	}
@@ -108,20 +108,30 @@ func (d *Dispatcher) isDebug(userId int, com string) bool {
 	switch com {
 	case config.TmDebugStartCmd:
 		d.debug = true
-	case config.TmDebugEndCmd:
+	case config.TmDebugStopCmd:
 		d.debug = false
 	}
 
 	return d.debug
 }
 
-func (d *Dispatcher) getReportKeyboard() telegram.ReplyKeyboardMarkup {
-	btn := telegram.KeyboardButton{
+func (d *Dispatcher) getAdminKeyboard() telegram.ReplyKeyboardMarkup {
+	btnTopViewers := telegram.KeyboardButton{
 		Text:            config.TmTopViewersCmd,
 		RequestContact:  false,
 		RequestLocation: false,
 	}
-	btns := []telegram.KeyboardButton{btn}
+	btnDebugStart := telegram.KeyboardButton{
+		Text:            config.TmDebugStartCmd,
+		RequestContact:  false,
+		RequestLocation: false,
+	}
+	btnDebugStop := telegram.KeyboardButton{
+		Text:            config.TmDebugStopCmd,
+		RequestContact:  false,
+		RequestLocation: false,
+	}
+	btns := []telegram.KeyboardButton{btnTopViewers, btnDebugStart, btnDebugStop}
 	keyboards := [][]telegram.KeyboardButton{btns}
 	rm := telegram.ReplyKeyboardMarkup{
 		Keyboard:        keyboards,

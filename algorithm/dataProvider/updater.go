@@ -26,7 +26,6 @@ type ItemUpdater struct {
 
 // Run инициализирует БД для работы ItemUpdater-а
 func (upd *ItemUpdater) Run(db *gorm.DB, catType string) *ItemUpdater {
-
 	upd.db = db
 	upd.catType = catType
 	upd.totalUp = 0
@@ -40,8 +39,8 @@ func (upd *ItemUpdater) Run(db *gorm.DB, catType string) *ItemUpdater {
 func (upd *ItemUpdater) updateItems(catType string) {
 	log.Printf("Starting update %s for %d entries", catType, getUpdates)
 	upd.totalEntriesCount = upd.getTotalEntriesCount()
+	reddit.ClearLastId() // Перед обновлением обязательно стираем lastId от предыдущих обновлений
 	for upd.totalUp < getUpdates || upd.errCount > 10 {
-		fmt.Printf("%d %d %d %s\n", upd.totalUp, upd.totalEntriesCount, upd.errCount, catType)
 		switch catType {
 		case config.TmNSFWCmd:
 			items, err := reddit.GetItems(config.RdtNSFWHot)
@@ -51,7 +50,7 @@ func (upd *ItemUpdater) updateItems(catType string) {
 				continue
 			}
 			upd.add(items...)
-		case config.TmCeleb:
+		case config.TmCelebCmd:
 			items, err := reddit.GetItems(config.RdtCelebHot)
 			if err != nil {
 				log.Println(err.Error())
@@ -60,15 +59,12 @@ func (upd *ItemUpdater) updateItems(catType string) {
 			}
 			upd.add(items...)
 		case config.TmRealGirlsCmd:
-			fmt.Println("HERERERERERERERERERE")
 			items, err := reddit.GetItems(config.RdtRealGirlsHot)
-			fmt.Printf("%+v", items)
 			if err != nil {
 				log.Println(err.Error())
 				upd.errCount++
 				continue
 			}
-			fmt.Printf("%+v", items)
 			upd.add(items...)
 		}
 		upd.save()

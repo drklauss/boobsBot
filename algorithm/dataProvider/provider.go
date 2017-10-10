@@ -67,7 +67,7 @@ func (p *Provider) UpdateAll() {
 	updater := new(ItemUpdater)
 	updater.Run(p.db, config.TmNSFWCmd)
 	updater.Run(p.db, config.TmRealGirlsCmd)
-	updater.Run(p.db, config.TmCeleb)
+	updater.Run(p.db, config.TmCelebCmd)
 }
 
 // GetTopViewers4Tm запрашивает TopViewers отчет отформатированный для Telegram

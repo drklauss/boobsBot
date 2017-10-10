@@ -30,9 +30,6 @@ commands:
   prepare_service:
     desc: Подготовка сервиса к загрузке
     local: cp ./bin/$SERVICE_NAME ./$SERVICE_NAME
-  stop_service:
-      desc: Остановка сервиса
-      run: sudo service boobs-bot stop
   upload_service:
     desc: Загружаем новую версию сервиса
     upload:
@@ -43,9 +40,6 @@ commands:
     upload:
       - src: ./$DB_NAME
         dst: $DIR/
-  start_service:
-        desc: Запуск сервиса
-        run: sudo service boobs-bot start
   clear_temp_services:
       desc: Очистка ненужных файлов сервисов
       local: rm ./$SERVICE_NAME
@@ -55,8 +49,6 @@ targets:
     - backup_service
     - backup_db
     - prepare_service
-    - stop_service
     - upload_service
-    - start_service
 #    - upload_db
     - clear_temp_services
