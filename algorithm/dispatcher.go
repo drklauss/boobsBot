@@ -74,7 +74,6 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
-		fmt.Printf("%+v\n", doc)
 		telegram.SendDocument(doc)
 	case config.TmRealGirlsCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmRealGirlsCmd)
@@ -102,7 +101,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
 			KeyboardMarkup: d.getAdminKeyboard(),
-			Text:           fmt.Sprintf("Hello, %s!", mes.From.FirstName),
+			Text:           "",
 		}
 		telegram.SendMessage(mes)
 	case config.TmTopViewersCmd:

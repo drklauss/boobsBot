@@ -11,6 +11,7 @@ import (
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/dbEntities"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/reddit"
 	"github.com/jinzhu/gorm"
+	"bytes"
 )
 
 const getUpdates = 100
@@ -22,49 +23,54 @@ type ItemUpdater struct {
 	errCount          int      // количество ошибок при обновлении
 	insertValues      []string // вносимые значения
 	catType           string   // категория
+	log               *bytes.Buffer
 }
 
 // Run инициализирует БД для работы ItemUpdater-а
-func (upd *ItemUpdater) Run(db *gorm.DB, catType string) *ItemUpdater {
+func (upd *ItemUpdater) Run(db *gorm.DB, catType string) string {
 	upd.db = db
 	upd.catType = catType
 	upd.totalUp = 0
 	upd.insertValues = []string{}
+	upd.log = bytes.NewBufferString("")
 	upd.updateItems(catType)
 
-	return upd
+	return upd.log.String()
 }
 
 // Обновляет Items
 func (upd *ItemUpdater) updateItems(catType string) {
-	log.Printf("Starting update %s for %d entries", catType, getUpdates)
+	upd.log.WriteString(fmt.Sprintf("Starting update %s for %d entries\n", catType, getUpdates))
 	upd.totalEntriesCount = upd.getTotalEntriesCount()
-	reddit.ClearLastId() // Перед обновлением обязательно стираем lastId от предыдущих обновлений
+	var lastNameId string
 	for upd.totalUp < getUpdates || upd.errCount > 10 {
 		switch catType {
 		case config.TmNSFWCmd:
-			items, err := reddit.GetItems(config.RdtNSFWHot)
+			items, last, err := reddit.GetItems(config.RdtNSFWHot, lastNameId)
 			if err != nil {
 				log.Println(err.Error())
 				upd.errCount++
 				continue
 			}
+			lastNameId = last
 			upd.add(items...)
 		case config.TmCelebCmd:
-			items, err := reddit.GetItems(config.RdtCelebHot)
+			items, last, err := reddit.GetItems(config.RdtCelebHot, lastNameId)
 			if err != nil {
 				log.Println(err.Error())
 				upd.errCount++
 				continue
 			}
+			lastNameId = last
 			upd.add(items...)
 		case config.TmRealGirlsCmd:
-			items, err := reddit.GetItems(config.RdtRealGirlsHot)
+			items, last, err := reddit.GetItems(config.RdtRealGirlsHot, lastNameId)
 			if err != nil {
 				log.Println(err.Error())
 				upd.errCount++
 				continue
 			}
+			lastNameId = last
 			upd.add(items...)
 		}
 		upd.save()
@@ -72,7 +78,8 @@ func (upd *ItemUpdater) updateItems(catType string) {
 		upd.totalUp += afterInsertCount - upd.totalEntriesCount
 		upd.totalEntriesCount = afterInsertCount
 	}
-	log.Printf("Updated %d %s entries", upd.totalUp, catType)
+	upd.log.WriteString(fmt.Sprintf("Updated %d %s entries\n", upd.totalUp, catType))
+	log.Println(upd.log.String())
 }
 
 // Возвращает общее количество записей в таблице Urls

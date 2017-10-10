@@ -10,35 +10,26 @@ import (
 
 	"strconv"
 
-	"fmt"
-
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/dbEntities"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/gfycat"
 )
 
-var (
-	tokenSample TokenResponse
-	lastNameId  string
-)
-
-func ClearLastId() {
-	lastNameId = ""
-}
+var tokenSample TokenResponse
 
 // GetItems возвращает срез ImageItems
-func GetItems(uType string) ([]dbEntities.Url, error) {
+func GetItems(uType string, lastNameId string) ([]dbEntities.Url, string, error) {
 	if !isGoodToken() {
 		refreshToken()
 	}
-	subResp, err := fetchRdtResp(uType)
+	subResp, err := fetchRdtResp(uType, lastNameId)
 	if err != nil {
-		return []dbEntities.Url{}, err
+		return []dbEntities.Url{}, "", err
 	}
-	gfyUrls, imgurItems := sortUrls(subResp)
+	gfyUrls, imgurItems := sortUrls(&subResp)
 	gfyItems, err := gfycat.ConvertNamesToUrls(gfyUrls)
 	if err != nil {
-		return []dbEntities.Url{}, err
+		return []dbEntities.Url{}, "", err
 	}
 	for _, gfyItem := range gfyItems {
 		item := dbEntities.Url{
@@ -48,7 +39,12 @@ func GetItems(uType string) ([]dbEntities.Url, error) {
 		imgurItems = append(imgurItems, item)
 	}
 
-	return imgurItems, nil
+	return imgurItems, getLastNameId(&subResp), nil
+}
+
+// Возвращает lastNameId для последующей пагинации
+func getLastNameId(subResp *SubRedditResponse) string {
+	return subResp.Data.Children[len(subResp.Data.Children)].Data.Name
 }
 
 // Проверяет действителен ли токен
@@ -93,7 +89,7 @@ func refreshToken() error {
 }
 
 // Возвращает SubRedditResponse
-func fetchRdtResp(uType string) (SubRedditResponse, error) {
+func fetchRdtResp(uType string, lastNameId string) (SubRedditResponse, error) {
 	var err error
 	client := new(http.Client)
 	req, _ := http.NewRequest("GET", config.RdtApiUrl+uType, nil)
@@ -119,7 +115,7 @@ func fetchRdtResp(uType string) (SubRedditResponse, error) {
 }
 
 // Сортирует по картинкам и видосикам
-func sortUrls(subResp SubRedditResponse) ([]string, []dbEntities.Url) {
+func sortUrls(subResp *SubRedditResponse) ([]string, []dbEntities.Url) {
 	var (
 		gfyUrls []string
 		items   []dbEntities.Url
@@ -136,8 +132,6 @@ func sortUrls(subResp SubRedditResponse) ([]string, []dbEntities.Url) {
 			}
 			items = append(items, item)
 		}
-		lastNameId = child.Data.Name
-		fmt.Printf("%+v\n", lastNameId)
 	}
 
 	return gfyUrls, items

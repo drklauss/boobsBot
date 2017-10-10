@@ -49,7 +49,8 @@ func useFlags(f Flags) bool {
 	if f.update {
 		provider := new(dataProvider.Provider)
 		p := provider.Init(true)
-		p.UpdateAll()
+		l := p.UpdateAll()
+		log.Println(l)
 		return true
 	}
 	switch f.statistic {

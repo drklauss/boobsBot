@@ -63,11 +63,12 @@ func (p *Provider) GetUrl(chat telegram.Chat, cat string) dbEntities.Url {
 }
 
 // Обновляет данные
-func (p *Provider) UpdateAll() {
+func (p *Provider) UpdateAll() string {
 	updater := new(ItemUpdater)
-	updater.Run(p.db, config.TmNSFWCmd)
-	updater.Run(p.db, config.TmRealGirlsCmd)
-	updater.Run(p.db, config.TmCelebCmd)
+	nsfwLog := updater.Run(p.db, config.TmNSFWCmd)
+	realGLog := updater.Run(p.db, config.TmRealGirlsCmd)
+	celebLog := updater.Run(p.db, config.TmCelebCmd)
+	return nsfwLog + realGLog + celebLog
 }
 
 // GetTopViewers4Tm запрашивает TopViewers отчет отформатированный для Telegram
