@@ -19,7 +19,7 @@ type TopViewer struct {
 }
 
 // GetTopViewers возвращает отформатированнный topViewers отчет
-func (p *ReportGenerator) GetTopViewers(format int) []byte {
+func (p *ReportGenerator) GetTopViewers(format int) string {
 	var tVs []TopViewer
 	sql := `SELECT c.title,
 					c.type,
@@ -33,7 +33,7 @@ func (p *ReportGenerator) GetTopViewers(format int) []byte {
 	err := p.db.Raw(sql).Scan(&tVs).Error
 	if err != nil {
 		log.Println(err)
-		return []byte{}
+		return ""
 	}
 
 	buf := new(bytes.Buffer)
@@ -56,5 +56,5 @@ func (p *ReportGenerator) GetTopViewers(format int) []byte {
 		}
 	}
 
-	return buf.Bytes()
+	return buf.String()
 }

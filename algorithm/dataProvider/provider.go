@@ -68,16 +68,17 @@ func (p *Provider) UpdateAll() string {
 	nsfwLog := updater.Run(p.db, config.TmNSFWCmd)
 	realGLog := updater.Run(p.db, config.TmRealGirlsCmd)
 	celebLog := updater.Run(p.db, config.TmCelebCmd)
-	return nsfwLog + realGLog + celebLog
+
+	return fmt.Sprintf("%s%s%s", nsfwLog, realGLog, celebLog)
 }
 
 // GetTopViewers4Tm запрашивает TopViewers отчет отформатированный для Telegram
-func (p *Provider) GetTopViewers4Tm() []byte {
+func (p *Provider) GetTopViewers4Tm() string {
 	return new(stat.ReportGenerator).SetDb(p.db).GetTopViewers(stat.TelegramFmt)
 }
 
 // GetTopViewers4Cl запрашивает TopViewers отчет отформатированный для Console
-func (p *Provider) GetTopViewers4Cl() []byte {
+func (p *Provider) GetTopViewers4Cl() string {
 	return new(stat.ReportGenerator).SetDb(p.db).GetTopViewers(stat.ConsoleFmt)
 }
 

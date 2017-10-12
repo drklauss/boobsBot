@@ -44,7 +44,7 @@ func GetItems(uType string, lastNameId string) ([]dbEntities.Url, string, error)
 
 // Возвращает lastNameId для последующей пагинации
 func getLastNameId(subResp *SubRedditResponse) string {
-	return subResp.Data.Children[len(subResp.Data.Children)].Data.Name
+	return subResp.Data.Children[len(subResp.Data.Children)-1].Data.Name
 }
 
 // Проверяет действителен ли токен

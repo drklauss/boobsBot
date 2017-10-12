@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"fmt"
 	"strings"
 
 	"github.com/drklauss/boobsBot/algorithm/config"
@@ -101,18 +100,29 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
 			KeyboardMarkup: d.getAdminKeyboard(),
-			Text:           "",
+			Text:           "Админская клавиатура",
+		}
+		telegram.SendMessage(mes)
+	case config.TmUpdateCmd:
+		if mes.From.Id != config.TmDevUserId {
+			return
+		}
+		s := d.dataProv.UpdateAll()
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			Text:           s,
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
 		}
 		telegram.SendMessage(mes)
 	case config.TmTopViewersCmd:
 		if mes.From.Id != config.TmDevUserId {
 			return
 		}
-		b := d.dataProv.GetTopViewers4Tm()
+		s := d.dataProv.GetTopViewers4Tm()
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
-			Text:           fmt.Sprintf("%s", b),
-			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+			Text:           s,
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
 		}
 		telegram.SendMessage(mes)
 	}
@@ -133,6 +143,7 @@ func (d *Dispatcher) isDebug(userId int, com string) bool {
 	return d.debug
 }
 
+// Возвращает админскую инлайновую клавиатуру
 func (d *Dispatcher) getAdminKeyboard() telegram.ReplyKeyboardMarkup {
 	btnTopViewers := telegram.KeyboardButton{
 		Text:            config.TmTopViewersCmd,
@@ -149,7 +160,12 @@ func (d *Dispatcher) getAdminKeyboard() telegram.ReplyKeyboardMarkup {
 		RequestContact:  false,
 		RequestLocation: false,
 	}
-	btns := []telegram.KeyboardButton{btnTopViewers, btnDebugStart, btnDebugStop}
+	btnUpdate := telegram.KeyboardButton{
+		Text:            config.TmUpdateCmd,
+		RequestContact:  false,
+		RequestLocation: false,
+	}
+	btns := []telegram.KeyboardButton{btnTopViewers, btnDebugStart, btnDebugStop, btnUpdate}
 	keyboards := [][]telegram.KeyboardButton{btns}
 	rm := telegram.ReplyKeyboardMarkup{
 		Keyboard:        keyboards,

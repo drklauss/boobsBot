@@ -27,7 +27,7 @@ type ItemUpdater struct {
 }
 
 // Run инициализирует БД для работы ItemUpdater-а
-func (upd *ItemUpdater) Run(db *gorm.DB, catType string) string {
+func (upd *ItemUpdater) Run(db *gorm.DB, catType string) []byte {
 	upd.db = db
 	upd.catType = catType
 	upd.totalUp = 0
@@ -35,12 +35,14 @@ func (upd *ItemUpdater) Run(db *gorm.DB, catType string) string {
 	upd.log = bytes.NewBufferString("")
 	upd.updateItems(catType)
 
-	return upd.log.String()
+	return upd.log.Bytes()
 }
 
 // Обновляет Items
 func (upd *ItemUpdater) updateItems(catType string) {
-	upd.log.WriteString(fmt.Sprintf("Starting update %s for %d entries\n", catType, getUpdates))
+	startUpd := fmt.Sprintf("Starting update %s", catType)
+	log.Println(startUpd)
+	upd.log.WriteString(startUpd)
 	upd.totalEntriesCount = upd.getTotalEntriesCount()
 	var lastNameId string
 	for upd.totalUp < getUpdates || upd.errCount > 10 {
@@ -78,8 +80,9 @@ func (upd *ItemUpdater) updateItems(catType string) {
 		upd.totalUp += afterInsertCount - upd.totalEntriesCount
 		upd.totalEntriesCount = afterInsertCount
 	}
-	upd.log.WriteString(fmt.Sprintf("Updated %d %s entries\n", upd.totalUp, catType))
-	log.Println(upd.log.String())
+	endUpd := fmt.Sprintf("Updated %d %s entries\n", upd.totalUp, catType)
+	upd.log.WriteString(endUpd)
+	log.Println(endUpd)
 }
 
 // Возвращает общее количество записей в таблице Urls

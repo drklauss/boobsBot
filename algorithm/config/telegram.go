@@ -16,7 +16,8 @@ const (
 	TmHelloCmd     = "hello"      // Команда приветствия
 	// Админские
 	TmAdmin         = "admin"                        // Команда получения админской клавиатуры
-	TmDebugStartCmd = "debugStart"                   // Команда включения режима отладки
-	TmDebugStopCmd  = "debugStop"                    // Команда выключения режима отладки
+	TmDebugStartCmd = "\xF0\x9F\x94\xB4 Debug Start" // Команда включения режима отладки
+	TmDebugStopCmd  = "\xF0\x9F\x94\xB5 Debug Stop"  // Команда выключения режима отладки
 	TmTopViewersCmd = "\xF0\x9F\x93\x8A Top Viewers" // Команда получения отчета топ-зрителей
+	TmUpdateCmd     = "\xF0\x9F\x94\x84 Update"      // Команда обновления
 )
