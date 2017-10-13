@@ -1,6 +1,8 @@
-hash: df046063fab3942dc048fc42506852d45d8fbb38222c2b19442dac1f0b6d99c4
-updated: 2017-10-01T11:07:33.040843304+03:00
+hash: 08acff61b8689b0f453b7344415d44564b4aa5482d05df5f6593a541d84b2392
+updated: 2017-10-13T13:18:51.111332678+03:00
 imports:
+- name: github.com/fatih/camelcase
+  version: f6a740d52f961c60348ebb109adde9f4635d7540
 - name: github.com/jinzhu/gorm
   version: 5174cc5c242a728b435ea2be8a2f7f998e15429b
   subpackages:

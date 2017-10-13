@@ -43,7 +43,6 @@ func (upd *ItemUpdater) updateItems(catType string) {
 	log.Println(fmt.Sprintf("Starting update %s \n", catType))
 	upd.totalEntriesCount = upd.getTotalEntriesCount()
 	var lastNameId string
-
 	for upd.totalUp < getUpdates || upd.errCount > 5 {
 		switch catType {
 		case config.TmNSFWCmd:
