@@ -11,8 +11,8 @@ const (
 	TmDevUserId        = 90310429 // Мой userId
 	// Комманды бота
 	TmNSFWCmd      = "nsfw"       // Команда получения nsfw
-	TmRealGirlsCmd = "real_girls" // Команда получения item по тегу real girls
-	TmCelebCmd     = "celeb"      // Команда получения item по тегу real celebnsfw
+	TmRealGirlsCmd = "real_girls" // Команда получения real girls
+	TmCelebCmd     = "celeb"      // Команда получения real celebnsfw
 	TmHelloCmd     = "hello"      // Команда приветствия
 	TmHelpCmd      = "help"       // Команда help
 	TmRateCmd      = "rate"       // Команда получения ссылки для голосования

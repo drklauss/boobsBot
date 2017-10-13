@@ -6,10 +6,11 @@ import (
 
 	"strings"
 
+	"bytes"
+
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider"
 	"github.com/drklauss/boobsBot/algorithm/telegram"
-	"bytes"
 )
 
 type Dispatcher struct {
@@ -55,7 +56,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 	comName := strings.Split(mes.Text, config.TmFullBotName)
 	command := strings.Replace(comName[0], "/", "", -1)
 	d.dataProv.CreateChatEntry(mes)
-	if d.isDebug(mes.From.Id, command) {
+	if d.isHandledDebugCommand(mes, command) {
 		return
 	}
 	switch command {
@@ -108,16 +109,6 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		}
 		content.Send()
 		// =-_-= Админские команды =-_-=
-	case config.TmAdmin:
-		if mes.From.Id != config.TmDevUserId {
-			return
-		}
-		mes := telegram.MessageSend{
-			ChatId:         mes.Chat.Id,
-			KeyboardMarkup: d.getAdminKeyboard(),
-			Text:           "Админская клавиатура",
-		}
-		mes.Send()
 	case config.TmUpdateCmd:
 		if mes.From.Id != config.TmDevUserId {
 			return
@@ -143,9 +134,9 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 	}
 }
 
-// Проверяет включен ли дебаг для разработчика
-func (d *Dispatcher) isDebug(userId int, com string) bool {
-	if userId != config.TmDevUserId {
+// Обработана ли команда дебага
+func (d *Dispatcher) isHandledDebugCommand(mes telegram.Message, com string) bool {
+	if mes.From.Id != config.TmDevUserId {
 		return false
 	}
 	switch com {
@@ -153,6 +144,14 @@ func (d *Dispatcher) isDebug(userId int, com string) bool {
 		d.debug = true
 	case config.TmDebugStopCmd:
 		d.debug = false
+	case config.TmAdmin:
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			KeyboardMarkup: d.getAdminKeyboard(),
+			Text:           "Админская клавиатура",
+		}
+		mes.Send()
+		return true
 	}
 
 	return d.debug
