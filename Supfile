@@ -50,5 +50,5 @@ targets:
     - backup_db
     - prepare_service
     - upload_service
-#    - upload_db
+    - upload_db
     - clear_temp_services

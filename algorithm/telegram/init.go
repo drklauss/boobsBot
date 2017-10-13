@@ -30,8 +30,25 @@ func SendMessage(mes MessageSend) {
 	}
 }
 
+// SendPhoto отправляет документ в чат
+func SendPhoto(photo MediaSend) {
+	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
+	u.Path += "/sendPhoto"
+	params := url.Values{}
+	params.Set("chat_id", strconv.Itoa(photo.ChatId))
+	params.Set("photo", photo.Url)
+	params.Set("caption", photo.Caption)
+	b, _ := json.Marshal(photo.KeyboardMarkup)
+	params.Set("reply_markup", fmt.Sprintf("%s", b))
+	u.RawQuery = params.Encode()
+	_, err := http.Get(u.String())
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 // SendDocument отправляет документ в чат
-func SendDocument(doc DocumentSend) {
+func SendDocument(doc MediaSend) {
 	u, _ := url.ParseRequestURI(config.TmApiUrl + config.TmToken)
 	u.Path += "/sendDocument"
 	params := url.Values{}

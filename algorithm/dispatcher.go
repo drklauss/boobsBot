@@ -65,48 +65,48 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			Text:           "Hello",
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 		}
-		telegram.SendMessage(mes)
+		mes.Send()
 	case config.TmHelpCmd:
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
 			Text:           d.getHelpMsg(),
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 		}
-		telegram.SendMessage(mes)
+		mes.Send()
 	case config.TmRateCmd:
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
 			Text:           "Please, give us 5 \xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90 at \n https://telegram.me/storebot?start=DornBot",
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 		}
-		telegram.SendMessage(mes)
+		mes.Send()
 	case config.TmNSFWCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmNSFWCmd)
-		doc := telegram.DocumentSend{
+		content := telegram.MediaSend{
 			ChatId:         mes.Chat.Id,
 			Caption:        u.Caption,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
-		telegram.SendDocument(doc)
+		content.Send()
 	case config.TmRealGirlsCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmRealGirlsCmd)
-		doc := telegram.DocumentSend{
+		content := telegram.MediaSend{
 			ChatId:         mes.Chat.Id,
 			Caption:        u.Caption,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
-		telegram.SendDocument(doc)
+		content.Send()
 	case config.TmCelebCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmCelebCmd)
-		doc := telegram.DocumentSend{
+		content := telegram.MediaSend{
 			ChatId:         mes.Chat.Id,
 			Caption:        u.Caption,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
-		telegram.SendDocument(doc)
+		content.Send()
 		// =-_-= Админские команды =-_-=
 	case config.TmAdmin:
 		if mes.From.Id != config.TmDevUserId {
@@ -117,7 +117,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			KeyboardMarkup: d.getAdminKeyboard(),
 			Text:           "Админская клавиатура",
 		}
-		telegram.SendMessage(mes)
+		mes.Send()
 	case config.TmUpdateCmd:
 		if mes.From.Id != config.TmDevUserId {
 			return
@@ -128,7 +128,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			Text:           s,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
 		}
-		telegram.SendMessage(mes)
+		mes.Send()
 	case config.TmTopViewersCmd:
 		if mes.From.Id != config.TmDevUserId {
 			return
@@ -139,7 +139,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			Text:           s,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
 		}
-		telegram.SendMessage(mes)
+		mes.Send()
 	}
 }
 

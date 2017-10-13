@@ -1,5 +1,7 @@
 package telegram
 
+import "strings"
+
 type Response struct {
 	Ok     bool     `json:"ok"`
 	Result []Update `json:"result"`
@@ -64,15 +66,39 @@ type InlineKeyboardButton struct {
 	SwitchInlineQueryCurrentChat string `json:"switch_inline_query_current_chat"`
 }
 
+// Сущности для отправки
 type MessageSend struct {
 	ChatId         int
 	Text           string
 	KeyboardMarkup interface{}
 }
 
-type DocumentSend struct {
+func (ms *MessageSend) Send() {
+	SendMessage(*ms)
+}
+
+type MediaSend struct {
 	ChatId         int
 	Url            string
 	Caption        string
 	KeyboardMarkup interface{}
+}
+
+func (c *MediaSend) Send() {
+	uSplit := strings.Split(c.Url, ".")
+	if len(uSplit) <= 0 {
+		return
+	}
+	ext := uSplit[len(uSplit)-1]
+	for _, photoExt := range []string{"png", "jpg"} {
+		if strings.Contains(ext, photoExt) {
+			SendPhoto(*c)
+		}
+	}
+	for _, videoExt := range []string{"gifv", "mp4", "gif"} {
+		if strings.Contains(ext, videoExt) {
+			SendDocument(*c)
+		}
+	}
+
 }
