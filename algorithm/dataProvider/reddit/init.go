@@ -20,7 +20,10 @@ var tokenSample TokenResponse
 // GetItems возвращает срез ImageItems
 func GetItems(uType string, lastNameId string) ([]dbEntities.Url, string, error) {
 	if !isGoodToken() {
-		refreshToken()
+		err := refreshToken()
+		if err != nil {
+			return []dbEntities.Url{}, "", err
+		}
 	}
 	subResp, err := fetchRdtResp(uType, lastNameId)
 	if err != nil {
@@ -44,7 +47,10 @@ func GetItems(uType string, lastNameId string) ([]dbEntities.Url, string, error)
 
 // Возвращает lastNameId для последующей пагинации
 func getLastNameId(subResp *SubRedditResponse) string {
-	return subResp.Data.Children[len(subResp.Data.Children)-1].Data.Name
+	if len(subResp.Data.Children) > 0 {
+		return subResp.Data.Children[len(subResp.Data.Children)-1].Data.Name
+	}
+	return ""
 }
 
 // Проверяет действителен ли токен

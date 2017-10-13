@@ -12,8 +12,10 @@ const (
 	// Комманды бота
 	TmNSFWCmd      = "nsfw"       // Команда получения nsfw
 	TmRealGirlsCmd = "real_girls" // Команда получения item по тегу real girls
-	TmCelebCmd     = "celeb_nsfw" // Команда получения item по тегу real celebnsfw
+	TmCelebCmd     = "celeb"      // Команда получения item по тегу real celebnsfw
 	TmHelloCmd     = "hello"      // Команда приветствия
+	TmHelpCmd      = "help"       // Команда help
+	TmRateCmd      = "rate"       // Команда получения ссылки для голосования
 	// Админские
 	TmAdmin         = "admin"                        // Команда получения админской клавиатуры
 	TmDebugStartCmd = "\xF0\x9F\x94\xB4 Debug Start" // Команда включения режима отладки

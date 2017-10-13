@@ -9,6 +9,7 @@ import (
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider"
 	"github.com/drklauss/boobsBot/algorithm/telegram"
+	"bytes"
 )
 
 type Dispatcher struct {
@@ -62,6 +63,20 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
 			Text:           "Hello",
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+		}
+		telegram.SendMessage(mes)
+	case config.TmHelpCmd:
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			Text:           d.getHelpMsg(),
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+		}
+		telegram.SendMessage(mes)
+	case config.TmRateCmd:
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			Text:           "Please, give us 5 \xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90 at \n https://telegram.me/storebot?start=DornBot",
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 		}
 		telegram.SendMessage(mes)
@@ -174,4 +189,19 @@ func (d *Dispatcher) getAdminKeyboard() telegram.ReplyKeyboardMarkup {
 		Selective:       false,
 	}
 	return rm
+}
+
+func (d *Dispatcher) getHelpMsg() string {
+	buf := new(bytes.Buffer)
+	buf.WriteString("We offer you hot girls from popular categories \xF0\x9F\x98\x9C \n")
+	buf.WriteString("Available commands:\n")
+	buf.WriteString("/nsfw Gives you not safe for work content \n")
+	buf.WriteString("/real_girls Gives real girls \n")
+	buf.WriteString("/celeb Gives you naked celebrities \n")
+	buf.WriteString("/rate Gives a link to rate for us \n")
+	buf.WriteString("/help Bot help \n")
+	buf.WriteString("\n\n Do not forget to rate us 5 \xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90\xE2\xAD\x90 at \n")
+	buf.WriteString("https://telegram.me/storebot?start=DornBot")
+
+	return buf.String()
 }

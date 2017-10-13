@@ -40,12 +40,11 @@ func (upd *ItemUpdater) Run(db *gorm.DB, catType string) []byte {
 
 // Обновляет Items
 func (upd *ItemUpdater) updateItems(catType string) {
-	startUpd := fmt.Sprintf("Starting update %s", catType)
-	log.Println(startUpd)
-	upd.log.WriteString(startUpd)
+	log.Println(fmt.Sprintf("Starting update %s \n", catType))
 	upd.totalEntriesCount = upd.getTotalEntriesCount()
 	var lastNameId string
-	for upd.totalUp < getUpdates || upd.errCount > 10 {
+
+	for upd.totalUp < getUpdates || upd.errCount > 5 {
 		switch catType {
 		case config.TmNSFWCmd:
 			items, last, err := reddit.GetItems(config.RdtNSFWHot, lastNameId)
@@ -112,5 +111,8 @@ func (upd *ItemUpdater) add(items ...dbEntities.Url) *ItemUpdater {
 // Сохраняет данные в БД
 func (upd *ItemUpdater) save() {
 	insertStr := strings.Join(upd.insertValues, ",")
-	upd.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO \"Urls\" (\"category\",\"value\", \"urlHash\", \"caption\") VALUES %s", insertStr))
+	err := upd.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO \"Urls\" (\"category\",\"value\", \"urlHash\", \"caption\") VALUES %s", insertStr)).Error
+	if err != nil {
+		log.Println(err.Error())
+	}
 }
