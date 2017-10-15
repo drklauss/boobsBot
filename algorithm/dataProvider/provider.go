@@ -64,10 +64,9 @@ func (p *Provider) GetUrl(chat telegram.Chat, cat string) dbEntities.Url {
 
 // Обновляет данные
 func (p *Provider) UpdateAll() string {
-	updater := new(ItemUpdater)
-	nsfwLog := updater.Run(p.db, config.TmNSFWCmd)
-	realGLog := updater.Run(p.db, config.TmRealGirlsCmd)
-	celebLog := updater.Run(p.db, config.TmCelebCmd)
+	nsfwLog := new(ItemUpdater).Run(p.db, config.TmNSFWCmd)
+	realGLog := new(ItemUpdater).Run(p.db, config.TmRealGirlsCmd)
+	celebLog := new(ItemUpdater).Run(p.db, config.TmCelebCmd)
 
 	return fmt.Sprintf("%s%s%s", nsfwLog, realGLog, celebLog)
 }

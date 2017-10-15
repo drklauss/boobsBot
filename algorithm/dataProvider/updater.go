@@ -7,44 +7,54 @@ import (
 	"fmt"
 	"strings"
 
+	"bytes"
+
+	"time"
+
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/dbEntities"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/reddit"
 	"github.com/jinzhu/gorm"
-	"bytes"
 )
 
-const getUpdates = 100
+const (
+	getUpdates    = 100
+	maxUpdateTime = 60.00
+)
 
 type ItemUpdater struct {
-	db                *gorm.DB
-	totalEntriesCount int      // общее количество записей
-	totalUp           int      // количество обновленных ссылок
-	errCount          int      // количество ошибок при обновлении
-	insertValues      []string // вносимые значения
-	catType           string   // категория
-	log               *bytes.Buffer
+	db           *gorm.DB
+	totalUp      int      // количество обновленных ссылок
+	errCount     int      // количество ошибок при обновлении
+	insertValues []string // вносимые значения
+	catType      string   // категория
+	log          *bytes.Buffer
 }
 
 // Run инициализирует БД для работы ItemUpdater-а
 func (upd *ItemUpdater) Run(db *gorm.DB, catType string) []byte {
 	upd.db = db
 	upd.catType = catType
-	upd.totalUp = 0
-	upd.insertValues = []string{}
 	upd.log = bytes.NewBufferString("")
-	upd.updateItems(catType)
+	upd.updateItems()
 
 	return upd.log.Bytes()
 }
 
 // Обновляет Items
-func (upd *ItemUpdater) updateItems(catType string) {
-	log.Println(fmt.Sprintf("Starting update %s \n", catType))
-	upd.totalEntriesCount = upd.getTotalEntriesCount()
+func (upd *ItemUpdater) updateItems() {
+	log.Println(fmt.Sprintf("Starting update %s \n", upd.catType))
+	upStart := time.Now()
+	totalEntriesCount := upd.getTotalEntriesCount()
 	var lastNameId string
-	for upd.totalUp < getUpdates || upd.errCount > 5 {
-		switch catType {
+	for upd.totalUp < getUpdates && upd.errCount < 5 {
+		execTime := time.Since(upStart).Seconds()
+		if execTime > maxUpdateTime {
+			upd.log.WriteString(fmt.Sprintf("Update \"%s\" timeout\n", upd.catType))
+			break
+		}
+
+		switch upd.catType {
 		case config.TmNSFWCmd:
 			items, last, err := reddit.GetItems(config.RdtNSFWHot, lastNameId)
 			if err != nil {
@@ -74,11 +84,12 @@ func (upd *ItemUpdater) updateItems(catType string) {
 			upd.add(items...)
 		}
 		upd.save()
+		upd.insertValues = []string{}
 		afterInsertCount := upd.getTotalEntriesCount()
-		upd.totalUp += afterInsertCount - upd.totalEntriesCount
-		upd.totalEntriesCount = afterInsertCount
+		upd.totalUp += afterInsertCount - totalEntriesCount
+		totalEntriesCount = afterInsertCount
 	}
-	endUpd := fmt.Sprintf("Updated %d %s entries\n", upd.totalUp, catType)
+	endUpd := fmt.Sprintf("Updated %d %s entries\n", upd.totalUp, upd.catType)
 	upd.log.WriteString(endUpd)
 	log.Println(endUpd)
 }
@@ -95,7 +106,7 @@ func (upd *ItemUpdater) getTotalEntriesCount() int {
 func (upd *ItemUpdater) add(items ...dbEntities.Url) *ItemUpdater {
 	for _, item := range items {
 		if item.Value == "" {
-			return upd
+			continue
 		}
 		h := md5.New()
 		h.Write([]byte(item.Value))

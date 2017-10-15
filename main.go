@@ -39,7 +39,7 @@ func initLogFile() (*os.File, error) {
 		return file, fmt.Errorf("Cannot open log file: %v\n", file)
 	}
 	log.SetOutput(file)
-	log.SetFlags(3)
+	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
 	log.Println("-=-=-=-=Bot is starting=-=-=-=-")
 	return file, nil
 }

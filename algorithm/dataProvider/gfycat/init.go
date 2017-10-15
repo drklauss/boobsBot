@@ -48,17 +48,20 @@ func gfyWorker(namesCh <-chan string, gfyCh chan<- *GfyItem) {
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Println(err)
+			gfyCh <- &GfyItem{}
 			return
 		}
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Println(err)
+			gfyCh <- &GfyItem{}
 			return
 		}
 		var response Response
 		err = json.Unmarshal(respBody, &response)
 		if err != nil {
 			log.Println(err)
+			gfyCh <- &GfyItem{}
 			return
 		}
 		resp.Body.Close()
