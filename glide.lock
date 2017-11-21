@@ -1,5 +1,5 @@
 hash: 08acff61b8689b0f453b7344415d44564b4aa5482d05df5f6593a541d84b2392
-updated: 2017-10-13T13:18:51.111332678+03:00
+updated: 2017-10-13T14:10:35.679732217+03:00
 imports:
 - name: github.com/fatih/camelcase
   version: f6a740d52f961c60348ebb109adde9f4635d7540
@@ -18,7 +18,7 @@ imports:
 - name: github.com/PuerkitoBio/goquery
   version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: golang.org/x/net
-  version: 0a9397675ba34b2845f758fe3cd68828369c6517
+  version: a04bdaca5b32abe1c069418fb7088ae607de5bd0
   subpackages:
   - context
 testImports: []

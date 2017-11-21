@@ -41,14 +41,16 @@ func (d *Dispatcher) Run() {
 // Обрабатывает полученные обновления
 func (d *Dispatcher) processUpdates() {
 	upLen := len(d.upResp)
-	if upLen > 0 {
-		d.lastUpdId = d.upResp[upLen-1].UpdateId
-		for i := 0; i < upLen; i++ {
-			if time.Now().Unix() > d.upResp[i].Message.Date+config.TmSkipMessagesTime {
-				continue
-			}
-			d.handleUpdate(d.upResp[i].Message)
+	if upLen <= 0 {
+		return
+	}
+	d.lastUpdId = d.upResp[upLen-1].UpdateId
+	for i := 0; i < upLen; i++ {
+		if time.Now().Unix() > d.upResp[i].Message.Date+config.TmSkipMessagesTime {
+			continue
 		}
+		log.Printf("%+v \n", d.upResp[i])
+		d.handleUpdate(d.upResp[i].Message)
 	}
 }
 
