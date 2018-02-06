@@ -12,6 +12,7 @@ import (
 	"github.com/drklauss/boobsBot/algorithm/dataProvider"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider/stat"
 	"github.com/drklauss/boobsBot/algorithm/telegram"
+	"sync"
 )
 
 type Dispatcher struct {
@@ -31,7 +32,6 @@ func (d *Dispatcher) Run() {
 		d.upResp, err = telegram.GetUpdateEntities(d.lastUpdId)
 		if err != nil {
 			log.Println(err)
-			continue
 		}
 		d.processUpdates()
 		time.Sleep(config.TmUpdateTime * time.Second)
@@ -45,17 +45,23 @@ func (d *Dispatcher) processUpdates() {
 		return
 	}
 	d.lastUpdId = d.upResp[upLen-1].UpdateId
+	var wg sync.WaitGroup
 	for i := 0; i < upLen; i++ {
 		if time.Now().Unix() > d.upResp[i].Message.Date+config.TmSkipMessagesTime {
 			continue
 		}
-		log.Printf("%+v \n", d.upResp[i])
-		d.handleUpdate(d.upResp[i].Message)
+		wg.Add(1)
+		go func(mes telegram.Message) {
+			d.handleUpdate(mes)
+			wg.Done()
+		}(d.upResp[i].Message)
 	}
+	wg.Wait()
 }
 
 // Обрабатывет команду
 func (d *Dispatcher) handleUpdate(mes telegram.Message) {
+	log.Printf("New Update: %+v \n", mes)
 	comName := strings.Split(mes.Text, config.TmFullBotName)
 	command := strings.Replace(comName[0], "/", "", -1)
 	d.dataProv.CreateChatEntry(mes)
@@ -85,6 +91,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
+		log.Printf("Send Content: %+v \n", content)
 		content.Send()
 	case config.TmRealGirlsCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmRealGirlsCmd)
@@ -94,6 +101,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
+		log.Printf("Send Content: %+v \n", content)
 		content.Send()
 	case config.TmCelebCmd:
 		u := d.dataProv.GetUrl(mes.Chat, config.TmCelebCmd)
@@ -103,6 +111,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
 			Url:            u.Value,
 		}
+		log.Printf("Send Content: %+v \n", content)
 		content.Send()
 		// =-_-= Админские команды =-_-=
 	case config.TmUpdateCmd:
@@ -115,6 +124,7 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 			Text:           s,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
 		}
+		log.Printf("Update Info: %+v \n", strings.Replace(s, "\n", " ", -1))
 		mes.Send()
 	case config.TmTopViewersCmd:
 		if mes.From.Id != config.TmDevUserId {

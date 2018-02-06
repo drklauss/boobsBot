@@ -38,7 +38,7 @@ func (upd *ItemUpdater) Run(db *gorm.DB, catType string) []byte {
 
 // Обновляет Items
 func (upd *ItemUpdater) updateItems() {
-	log.Println(fmt.Sprintf("Starting update %s \n", upd.catType))
+	log.Println(fmt.Sprintf("Starting update %s", upd.catType))
 	upStart := time.Now()
 	totalEntriesCount := upd.getTotalEntriesCount()
 	var lastNameId string
