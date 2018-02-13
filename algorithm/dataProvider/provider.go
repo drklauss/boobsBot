@@ -71,16 +71,6 @@ func (p *Provider) UpdateAll() string {
 	return fmt.Sprintf("%s%s%s", nsfwLog, realGLog, celebLog)
 }
 
-// GetTopViewers4Tm запрашивает TopViewers отчет отформатированный для Telegram
-func (p *Provider) GetTopViewers4Tm() string {
-	return new(stat.ReportGenerator).SetDb(p.db).GetTopViewers(stat.TelegramFmt)
-}
-
-// GetTopViewers4Cl запрашивает TopViewers отчет отформатированный для Console
-func (p *Provider) GetTopViewers4Cl() string {
-	return new(stat.ReportGenerator).SetDb(p.db).GetTopViewers(stat.ConsoleFmt)
-}
-
 // Создает запись в просмотрах для чата
 func (p *Provider) createViewEntry(chatId, urlId int) {
 	v := dbEntities.View{
@@ -148,4 +138,14 @@ func (p *Provider) getOneUrl(chatId int, cat string) (dbEntities.Url, error) {
 	}
 
 	return u, err
+}
+
+// GetTopViewers4Tm запрашивает TopViewers отчет
+func (p *Provider) GetTopViewers(fmtType int) string {
+	return new(stat.ReportGenerator).SetDb(p.db).GetTopViewers(fmtType)
+}
+
+// GetTotalLinks запрашивает Categories отчет
+func (p *Provider) GetTotalLinks(fmtType int) string {
+	return new(stat.ReportGenerator).SetDb(p.db).GetCategories(fmtType)
 }

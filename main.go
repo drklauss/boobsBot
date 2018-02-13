@@ -10,6 +10,7 @@ import (
 	"github.com/drklauss/boobsBot/algorithm"
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider/stat"
 )
 
 type Flags struct {
@@ -21,7 +22,7 @@ func main() {
 	logFile, _ := initLogFile()
 	defer logFile.Close()
 	var f Flags
-	flag.BoolVar(&f.update, "u", false, "updateVideoItems Links. For each loop fetches 100 videos")
+	flag.BoolVar(&f.update, "u", false, "update Links. For each loop fetches 100 videos")
 	flag.StringVar(&f.statistic, "s", "", "Statistic. Example: -s top will generate top viewers report")
 	flag.Parse()
 	if useFlags(f) {
@@ -56,7 +57,12 @@ func useFlags(f Flags) bool {
 	switch f.statistic {
 	case "top":
 		p := new(dataProvider.Provider).Init(false)
-		b := p.GetTopViewers4Cl()
+		b := p.GetTopViewers(stat.ConsoleFmt)
+		fmt.Printf("\n%s\n", b)
+		return true
+	case "links":
+		p := new(dataProvider.Provider).Init(false)
+		b := p.GetTotalLinks(stat.ConsoleFmt)
 		fmt.Printf("\n%s\n", b)
 		return true
 	}

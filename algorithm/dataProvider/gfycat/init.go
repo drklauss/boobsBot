@@ -3,7 +3,6 @@ package gfycat
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"sync"
@@ -17,10 +16,9 @@ import (
 // ConvertNamesToUrls преобразовывает названия в ссылки
 func ConvertNamesToUrls(names []string) ([]*GfyItem, error) {
 	var gfyItems []*GfyItem
-	mutex := sync.Mutex{}
-	gfyCh := make(chan *GfyItem, config.Threads)
+	gfyCh := make(chan *GfyItem, config.ConvertNamesThreads)
 	namesCh := make(chan string, len(names))
-	for i := 1; i <= config.Threads; i++ {
+	for i := 1; i <= config.ConvertNamesThreads; i++ {
 		go gfyWorker(namesCh, gfyCh)
 	}
 
@@ -29,6 +27,7 @@ func ConvertNamesToUrls(names []string) ([]*GfyItem, error) {
 	}
 	close(namesCh)
 
+	mutex := sync.Mutex{}
 	for a := 0; a < len(names); a++ {
 		mutex.Lock()
 		gfyItems = append(gfyItems, <-gfyCh)
@@ -47,20 +46,17 @@ func gfyWorker(namesCh <-chan string, gfyCh chan<- *GfyItem) {
 		req, _ := http.NewRequest("GET", config.GfycatUrl+name, nil)
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Println(err)
 			gfyCh <- &GfyItem{}
 			return
 		}
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Println(err)
 			gfyCh <- &GfyItem{}
 			return
 		}
 		var response Response
 		err = json.Unmarshal(respBody, &response)
 		if err != nil {
-			log.Println(err)
 			gfyCh <- &GfyItem{}
 			return
 		}

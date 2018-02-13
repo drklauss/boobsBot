@@ -120,13 +120,16 @@ func fetchRdtResp(uType string, lastNameId string) (SubRedditResponse, error) {
 	return subResp, nil
 }
 
-// Сортирует по картинкам и видосикам
+// Сортирует по доменам
 func sortUrls(subResp *SubRedditResponse) ([]string, []dbEntities.Url) {
 	var (
 		gfyUrls []string
 		items   []dbEntities.Url
 	)
 	for _, child := range subResp.Data.Children {
+		if !isExtensionCorrect(&child.Data.Url) {
+			continue
+		}
 		if child.Data.Domain == config.GfycatDomain {
 			namesSlice := strings.Split(child.Data.Url, "/")
 			gfyUrls = append(gfyUrls, namesSlice[len(namesSlice)-1])
@@ -141,4 +144,15 @@ func sortUrls(subResp *SubRedditResponse) ([]string, []dbEntities.Url) {
 	}
 
 	return gfyUrls, items
+}
+
+// Корректно ли расширение файла
+func isExtensionCorrect(url *string) bool {
+	for _, ext := range strings.Split(config.DeniedExt, ",") {
+		if strings.Contains(*url, ext) {
+			return false
+		}
+	}
+
+	return true
 }

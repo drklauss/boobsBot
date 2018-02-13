@@ -13,7 +13,6 @@ const (
 	TmNSFWCmd      = "nsfw"       // Команда получения nsfw
 	TmRealGirlsCmd = "real_girls" // Команда получения real girls
 	TmCelebCmd     = "celeb"      // Команда получения real celebnsfw
-	TmHelloCmd     = "hello"      // Команда приветствия
 	TmHelpCmd      = "help"       // Команда help
 	TmRateCmd      = "rate"       // Команда получения ссылки для голосования
 	// Админские
@@ -21,5 +20,6 @@ const (
 	TmDebugStartCmd = "\xF0\x9F\x94\xB4 Debug Start" // Команда включения режима отладки
 	TmDebugStopCmd  = "\xF0\x9F\x94\xB5 Debug Stop"  // Команда выключения режима отладки
 	TmTopViewersCmd = "\xF0\x9F\x93\x8A Top Viewers" // Команда получения отчета топ-зрителей
+	TmTotalLinksCmd = "\xF0\x9F\x94\x97 Total Links" // Команда получения количества ссылок
 	TmUpdateCmd     = "\xF0\x9F\x94\x84 Update"      // Команда обновления
 )

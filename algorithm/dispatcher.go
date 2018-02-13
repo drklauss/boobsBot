@@ -10,13 +10,14 @@ import (
 
 	"github.com/drklauss/boobsBot/algorithm/config"
 	"github.com/drklauss/boobsBot/algorithm/dataProvider"
+	"github.com/drklauss/boobsBot/algorithm/dataProvider/stat"
 	"github.com/drklauss/boobsBot/algorithm/telegram"
 )
 
 type Dispatcher struct {
 	upResp    []telegram.Update
 	dataProv  dataProvider.Provider
-	debug     bool
+	debug     bool // todo в гитхабе лежит многопоточная версия, которая некорректно проставляет этот флаг
 	lastUpdId int
 }
 
@@ -60,13 +61,6 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		return
 	}
 	switch command {
-	case config.TmHelloCmd:
-		mes := telegram.MessageSend{
-			ChatId:         mes.Chat.Id,
-			Text:           "Hello",
-			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
-		}
-		mes.Send()
 	case config.TmHelpCmd:
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
@@ -124,12 +118,24 @@ func (d *Dispatcher) handleUpdate(mes telegram.Message) {
 		if mes.From.Id != config.TmDevUserId {
 			return
 		}
-		s := d.dataProv.GetTopViewers4Tm()
+		s := d.dataProv.GetTopViewers(stat.TelegramFmt)
 		mes := telegram.MessageSend{
 			ChatId:         mes.Chat.Id,
 			Text:           s,
 			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
 		}
+		mes.Send()
+	case config.TmTotalLinksCmd:
+		if mes.From.Id != config.TmDevUserId {
+			return
+		}
+		s := d.dataProv.GetTotalLinks(stat.TelegramFmt)
+		mes := telegram.MessageSend{
+			ChatId:         mes.Chat.Id,
+			Text:           s,
+			KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: false},
+		}
+
 		mes.Send()
 	}
 }
@@ -164,6 +170,11 @@ func (d *Dispatcher) getAdminKeyboard() telegram.ReplyKeyboardMarkup {
 		RequestContact:  false,
 		RequestLocation: false,
 	}
+	btnTotalLinks := telegram.KeyboardButton{
+		Text:            config.TmTotalLinksCmd,
+		RequestContact:  false,
+		RequestLocation: false,
+	}
 	btnDebugStart := telegram.KeyboardButton{
 		Text:            config.TmDebugStartCmd,
 		RequestContact:  false,
@@ -179,7 +190,7 @@ func (d *Dispatcher) getAdminKeyboard() telegram.ReplyKeyboardMarkup {
 		RequestContact:  false,
 		RequestLocation: false,
 	}
-	btns := []telegram.KeyboardButton{btnTopViewers, btnDebugStart, btnDebugStop, btnUpdate}
+	btns := []telegram.KeyboardButton{btnTopViewers, btnTotalLinks, btnDebugStart, btnDebugStop, btnUpdate}
 	keyboards := [][]telegram.KeyboardButton{btns}
 	rm := telegram.ReplyKeyboardMarkup{
 		Keyboard:        keyboards,

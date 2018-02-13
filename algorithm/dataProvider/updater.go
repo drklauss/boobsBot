@@ -17,11 +17,6 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-const (
-	getUpdates    = 100
-	maxUpdateTime = 60.00
-)
-
 type ItemUpdater struct {
 	db           *gorm.DB
 	totalUp      int      // количество обновленных ссылок
@@ -47,9 +42,9 @@ func (upd *ItemUpdater) updateItems() {
 	upStart := time.Now()
 	totalEntriesCount := upd.getTotalEntriesCount()
 	var lastNameId string
-	for upd.totalUp < getUpdates && upd.errCount < 5 {
+	for upd.totalUp < config.GetMaxUpdates && upd.errCount < 5 {
 		execTime := time.Since(upStart).Seconds()
-		if execTime > maxUpdateTime {
+		if execTime > config.UpdateTimeOut {
 			upd.log.WriteString(fmt.Sprintf("Update \"%s\" timeout\n", upd.catType))
 			break
 		}
