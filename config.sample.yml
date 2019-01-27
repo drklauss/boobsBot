@@ -1,0 +1,30 @@
+log: './log'
+telegram:
+  workers: 3
+  proxy:
+    server: 'your.proxy.com'
+    port: 3871
+    user: 'user'
+    password: 'password'
+  api: 'https://api.telegram.org/bot'
+  token: '728447533:AAGcrjS44c86oAStJd85sdWhfGcPIReMiw8'
+  admin: [78312428]
+  time: 
+    update: 3
+    skip_messages: 60
+imgur:
+  clientID: '19ba7ce0380f407'
+  secret: '5271a3ce82a946a64bd46fc72837798dac447418'
+reddit:
+  clientID: 'sdOdEs1uIvXN8v'
+  secret: 'VwJV78wkMlGD2pvNQGyeagHpzl8'
+  username: 'user'
+  password: 'password'
+  limit: 50
+  categories:
+    - name: 'NSFW'
+      source: ['/r/NSFW_GIF/hot','/r/AmateurAsianGirls/hot']
+    - name: 'Celebrities' 
+      source: ['/r/celebrities/hot']
+    - name: 'RealGirls'
+      source: ['/r/RealGirls/hot']

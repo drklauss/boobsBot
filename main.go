@@ -1,71 +1,57 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
-
 	"flag"
+	"fmt"
+	"os"
+	"runtime/trace"
 
-	"github.com/drklauss/boobsBot/algorithm"
-	"github.com/drklauss/boobsBot/algorithm/config"
-	"github.com/drklauss/boobsBot/algorithm/dataProvider"
-	"github.com/drklauss/boobsBot/algorithm/dataProvider/stat"
+	"github.com/drklauss/boobsBot/bot"
+	"github.com/drklauss/boobsBot/config"
+	"github.com/drklauss/boobsBot/handler"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"github.com/leesper/holmes"
 )
 
-type Flags struct {
-	update    bool
-	statistic string
-}
-
 func main() {
-	logFile, _ := initLogFile()
-	defer logFile.Close()
-	var f Flags
-	flag.BoolVar(&f.update, "u", false, "update Links. For each loop fetches 100 videos")
-	flag.StringVar(&f.statistic, "s", "", "Statistic. Example: -s top will generate top viewers report")
+
+	defer trace.Stop()
+	f, _ := os.Create("out.trace")
+	trace.Start(f)
+	debug := flag.Bool("debug", false, "enable debug")
 	flag.Parse()
-	if useFlags(f) {
-		os.Exit(0)
+	if err := config.Load(); err != nil {
+		fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
+		os.Exit(1)
 	}
-
-	// Запуск бота
-	new(algorithm.Dispatcher).Run()
-}
-
-// Инициализация лог-файла
-func initLogFile() (*os.File, error) {
-	file, err := os.OpenFile(config.LogFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	initLogger(debug)
+	b, err := bot.New(config.Get())
 	if err != nil {
-		return file, fmt.Errorf("Cannot open log file: %v\n", file)
+		holmes.Fatalf("could not create bot %v", err)
 	}
-	log.SetOutput(file)
-	log.SetFlags(log.Ldate | log.Ltime | log.Llongfile)
-	log.Println("-=-=-=-=Bot is starting=-=-=-=-")
-	return file, nil
+	b.Handle("/admin", nil)
+	b.Handle("/help", handler.Help)
+	b.Handle("/rate", handler.Rate)
+	b.Handle("/update", handler.Update)
+	b.Handle("/categories", handler.Categories)
+	for _, c := range config.Get().Categories {
+		b.Handle(c.Name, handler.Get)
+	}
+	b.UseMiddlewares(bot.LogRequest, bot.CheckAdmin)
+	b.Run()
 }
 
-// Запсукает программу с отдельными флагами
-func useFlags(f Flags) bool {
-	if f.update {
-		provider := new(dataProvider.Provider)
-		p := provider.Init(true)
-		l := p.UpdateAll()
-		log.Println(l)
-		return true
+// Logger initializing
+// todo swap logger to logrus
+func initLogger(debug *bool) holmes.Logger {
+	middlewares := []func(holmes.Logger) holmes.Logger{
+		holmes.LogFilePath(config.Get().LogPath),
+		holmes.InfoLevel,
 	}
-	switch f.statistic {
-	case "top":
-		p := new(dataProvider.Provider).Init(false)
-		b := p.GetTopViewers(stat.ConsoleFmt)
-		fmt.Printf("\n%s\n", b)
-		return true
-	case "links":
-		p := new(dataProvider.Provider).Init(false)
-		b := p.GetTotalLinks(stat.ConsoleFmt)
-		fmt.Printf("\n%s\n", b)
-		return true
+	if *debug {
+		middlewares = append(middlewares, holmes.DebugLevel)
+		middlewares = append(middlewares, holmes.AlsoStdout)
 	}
 
-	return false
+	return holmes.Start(middlewares...)
 }
