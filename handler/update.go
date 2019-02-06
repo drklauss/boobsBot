@@ -62,7 +62,7 @@ func Update(ctx context.Context, u *telegram.Update) {
 				t = fmt.Sprintf("total fetched %d items for \"%s\" by %s", count, c, path)
 				holmes.Infoln(t)
 				ms := telegram.MessageSend{
-					ChatID: config.Get().Telegram.Admin,
+					ChatID: u.Message.Chat.ID,
 					Text:   t,
 				}
 				ms.Send()

@@ -29,13 +29,19 @@ func Get(ctx context.Context, u *telegram.Update) {
 		holmes.Errorln(err)
 		return
 	}
-	ms := telegram.MediaSend{
-		ChatID:         u.Message.Chat.ID,
-		URL:            item.URL,
-		Caption:        item.Caption,
-		KeyboardMarkup: telegram.GetDefaultKeayboard(),
+	acq := telegram.AnswerCallbackQuery{
+		CallbackQueryID: u.CallBackQuery.ID,
+		Text:            "Nice choice, maaaan!",
+		URL:             item.URL,
 	}
-	holmes.Debugf("ready for send for %d \"%v\"", ms.ChatID, ms.URL)
+
+	telegram.SendAnswerCallbackQuery(acq)
+	ms := telegram.MediaSend{
+		ChatID:  u.CallBackQuery.Message.Chat.ID,
+		URL:     item.URL,
+		Caption: item.Caption,
+	}
+
 	err = ms.Send()
 	if err != nil {
 		holmes.Errorln(err)

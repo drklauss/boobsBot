@@ -122,20 +122,33 @@ func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 	for i := 1; i <= b.config.Telegram.Workers; i++ {
 		go func(i int, ctx context.Context) {
 			for upd := range *updates {
-				if time.Now().Unix() > upd.Message.Date+int64(b.config.Telegram.Time.SkipMessages) {
+				if isTooOldUpdate(&upd, b.config.Telegram.Time.SkipMessages) {
+					holmes.Debugf("sorry, it is a very old update %v ", u)
 					continue
 				}
+
 				holmes.Debugf("worker %d processing %d from %+v with text \"%s\"", i, upd.UpdateID, upd.Message.From, upd.Message.Text)
-				h, ok := b.handlers[upd.Message.Text]
-				if !ok {
-					holmes.Infof("incorrect command processed: %v", upd.Message.Text)
+				hCommand, okCommand := b.handlers[upd.Message.Text]
+				hCallback, okCallback := b.handlers[upd.CallBackQuery.Data]
+				// simple text command handler
+				if okCommand {
+					ctx = SetCategory(ctx, &upd.Message.Text)
+					for _, m := range b.middlewares {
+						hCommand = m(ctx, hCommand, &upd)
+					}
+					hCommand(ctx, &upd)
 					continue
 				}
-				ctx = SetCategory(ctx, &upd.Message.Text)
-				for _, m := range b.middlewares {
-					h = m(ctx, h, &upd)
+				// inline callbacks handler
+				if okCallback {
+					ctx = SetCategory(ctx, &upd.CallBackQuery.Data)
+					for _, m := range b.middlewares {
+						hCallback = m(ctx, hCallback, &upd)
+					}
+					hCallback(ctx, &upd)
+					continue
 				}
-				h(ctx, &upd)
+				holmes.Infof("incorrect command processed: %v", upd.Message.Text)
 			}
 		}(i, ctx)
 	}
@@ -160,4 +173,20 @@ func tryCreateDb() (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+func isTooOldUpdate(upd *telegram.Update, skip int64) bool {
+	if upd.Message.Date != 0 {
+		if time.Now().Unix() > upd.Message.Date+skip {
+			return true
+		}
+		return false
+	}
+	if upd.CallBackQuery.Message.Date != 0 {
+		if time.Now().Unix() > upd.Message.Date+skip {
+			return true
+		}
+		return false
+	}
+	return false
 }

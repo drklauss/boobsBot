@@ -12,7 +12,7 @@ func Categories(ctx context.Context, u *telegram.Update) {
 	ms := telegram.MessageSend{
 		ChatID:         u.Message.Chat.ID,
 		Text:           "Choose category from list",
-		KeyboardMarkup: telegram.GetDefaultKeayboard(),
+		KeyboardMarkup: telegram.GetCategoriesInlineKeayboard(),
 	}
 	err := ms.Send()
 	if err != nil {

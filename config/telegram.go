@@ -13,7 +13,7 @@ type Telegram struct {
 	API   string `yaml:"api"`
 	Admin []int  `yaml:"admin"`
 	Time  struct {
-		Update       int `yaml:"update"`
-		SkipMessages int `yaml:"skip_messages"`
+		Update       int   `yaml:"update"`
+		SkipMessages int64 `yaml:"skip_messages"`
 	} `yaml:"time,flow"`
 }

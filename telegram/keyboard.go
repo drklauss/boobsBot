@@ -4,7 +4,10 @@ import (
 	"github.com/drklauss/boobsBot/config"
 )
 
-var adminKeydoard, defaultKeyboard *ReplyKeyboardMarkup
+var (
+	adminKeydoard      *ReplyKeyboardMarkup
+	categoriesKeyboard *InlineKeyboardMarkup
+)
 
 // ReplyKeyboardMarkup is reply keyboard markup
 type ReplyKeyboardMarkup struct {
@@ -43,21 +46,17 @@ type InlineKeyboardButton struct {
 
 func loadKeyboards() {
 	// default
-	var btns []KeyboardButton
+	var btns []InlineKeyboardButton
 	for _, c := range config.Get().Categories {
-		btn := KeyboardButton{
-			Text:            c.Name,
-			RequestContact:  false,
-			RequestLocation: false,
+		btn := InlineKeyboardButton{
+			Text:         c.Name,
+			CallbackData: c.Name,
 		}
 		btns = append(btns, btn)
 	}
-	keyboards := [][]KeyboardButton{btns}
-	defaultKeyboard = &ReplyKeyboardMarkup{
-		Keyboard:        keyboards,
-		OneTimeKeyboard: true,
-		ResizeKeyboard:  true,
-		Selective:       false,
+	keyboards := [][]InlineKeyboardButton{btns}
+	categoriesKeyboard = &InlineKeyboardMarkup{
+		InlineKeyboard: keyboards,
 	}
 	// admin
 	btnDebugStart := KeyboardButton{
@@ -83,12 +82,12 @@ func loadKeyboards() {
 	}
 }
 
-// GetDefaultKeayboard returns default user keyboard
-func GetDefaultKeayboard() *ReplyKeyboardMarkup {
-	return defaultKeyboard
-}
-
 // GetAdminKeayboard returns admin keyboard
 func GetAdminKeayboard() *ReplyKeyboardMarkup {
 	return adminKeydoard
+}
+
+// GetCategoriesInlineKeayboard returns categories keyboard
+func GetCategoriesInlineKeayboard() *InlineKeyboardMarkup {
+	return categoriesKeyboard
 }

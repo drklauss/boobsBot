@@ -49,6 +49,10 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 			KeyboardMarkup: telegram.GetAdminKeayboard(),
 		}
 	default:
+		if isAdmin && Debug() {
+			holmes.Infoln("all non-admin commands will be ignored during debug")
+			return func(ctx context.Context, u *telegram.Update) {}
+		}
 		return defaultHanlder
 	}
 	err := ms.Send()

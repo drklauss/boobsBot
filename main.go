@@ -29,7 +29,9 @@ func main() {
 	if err != nil {
 		holmes.Fatalf("could not create bot %v", err)
 	}
-	b.Handle("/admin", nil)
+	b.Handle("/admin", handler.Empty)
+	b.Handle("/debugStart", handler.Empty)
+	b.Handle("/debugStop", handler.Empty)
 	b.Handle("/help", handler.Help)
 	b.Handle("/rate", handler.Rate)
 	b.Handle("/update", handler.Update)

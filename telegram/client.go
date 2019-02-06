@@ -170,3 +170,30 @@ func SendDocument(doc MediaSend) error {
 	}
 	return nil
 }
+
+// SendAnswerCallbackQuery sends query answer
+func SendAnswerCallbackQuery(acq AnswerCallbackQuery) error {
+	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
+	u.Path += "/answerCallbackQuery"
+	params := url.Values{}
+	params.Set("callback_query_id", acq.CallbackQueryID)
+	params.Set("text", acq.Text)
+	if acq.ShowAlert {
+		params.Set("show_alert", "true")
+	}
+	// params.Set("url", acq.URL)
+	u.RawQuery = params.Encode()
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return errors.Wrap(err, "could not create request")
+	}
+	resp, err := tClient.sender.Do(req)
+	if err != nil {
+		return errors.Wrap(err, "could not make request")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.Wrap(err, "could not make request")
+	}
+	return nil
+}

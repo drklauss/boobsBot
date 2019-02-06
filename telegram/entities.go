@@ -11,13 +11,36 @@ type Response struct {
 	Result []Update `json:"result"`
 }
 
-// Update contains main update info from bot
+// Update object represents an incoming update.
+// At most one of the optional parameters can be present in any given update
 type Update struct {
-	UpdateID int     `json:"update_id"`
-	Message  Message `json:"message"`
+	UpdateID      int           `json:"update_id"`
+	Message       Message       `json:"message"`
+	CallBackQuery CallbackQuery `json:"callback_query"`
 }
 
-// Message is a message message from chat
+// CallbackQuery object represents an incoming callback query from a callback button in an inline keyboard.
+// If the button that originated the query was attached to a message sent by the bot, the field message will be present.
+// If the button was attached to a message sent via the bot (in inline mode), the field inline_message_id will be present.
+// Exactly one of the fields data or game_short_name will be present
+type CallbackQuery struct {
+	ID      string  `json:"id"`
+	From    User    `json:"from"`
+	Message Message `json:"message"`
+	Data    string  `json:"data"`
+}
+
+// AnswerCallbackQuery is method to send answers to callback queries sent from inline keyboards.
+// The answer will be displayed to the user as a notification at the top of the chat screen or as an alert.
+// On success, True is returned.
+type AnswerCallbackQuery struct {
+	CallbackQueryID string `json:"callback_query_id"`
+	Text            string `json:"text"`
+	ShowAlert       bool   `json:"show_alert"`
+	URL             string `json:"url"`
+}
+
+// Message represents message
 type Message struct {
 	ID   int    `json:"message_id"`
 	From User   `json:"from"`
@@ -26,14 +49,14 @@ type Message struct {
 	Text string `json:"text"`
 }
 
-// User is info about who sent message
+// User represents a Telegram user or bot
 type User struct {
 	ID        int    `json:"id"`
 	FirstName string `json:"first_name"`
 	UserName  string `json:"username"`
 }
 
-// Chat is where message was sent to
+// Chat represents chat
 type Chat struct {
 	ID                          int    `json:"id"`
 	Title                       string `json:"title"`
