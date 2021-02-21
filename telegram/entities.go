@@ -17,6 +17,32 @@ type Update struct {
 	UpdateID      int           `json:"update_id"`
 	Message       Message       `json:"message"`
 	CallBackQuery CallbackQuery `json:"callback_query"`
+	//InlineQuery        InlineQuery        `json:"inline_query"`
+	//ChosenInlineResult ChosenInlineResult `json:"chosen_inline_result"`
+}
+
+// InlineQuery This object represents an incoming inline query. When the user sends an empty query, your bot could return some default or trending results.
+type InlineQuery struct {
+	ID       string   `json:"id"`       // Unique identifier for this query
+	From     User     `json:"from"`     // Sender
+	Location Location `json:"location"` // Опционально. Sender location, only for bots that request user location
+	Query    string   `json:"query"`    // Text of the query
+	Offset   string   `json:"offset"`   // Offset of the results to be returned, can be controlled by the bot
+}
+
+// ChosenInlineResult Represents a result of an inline query that was chosen by the user and sent to their chat partner.
+type ChosenInlineResult struct {
+	ResultID        string   `json:"result_id"`         // The unique identifier for the result that was chosen
+	From            User     `json:"from"`              // The user that chose the result
+	Location        Location `json:"location"`          // Опционально. Sender location, only for bots that require user location
+	InlineMessageID string   `json:"inline_message_id"` // Опционально. Identifier of the sent inline message. Available only if there is an inline keyboard attached to the message. Will be also received in callback queries and can be used to edit the message.
+	Query           string   `json:"query"`             // The query that was used to obtain the result
+}
+
+// Location Этот объект представляет точку на карте.
+type Location struct {
+	Longitude float64 `json:"longitude"` // Долгота, заданная отправителем
+	Latitude  float64 `json:"latitude"`  // Широта, заданная отправителем
 }
 
 // CallbackQuery object represents an incoming callback query from a callback button in an inline keyboard.
@@ -42,17 +68,19 @@ type AnswerCallbackQuery struct {
 
 // Message represents message.
 type Message struct {
-	ID   int    `json:"message_id"`
-	From User   `json:"from"`
-	Chat Chat   `json:"chat"`
-	Date int64  `json:"date"`
-	Text string `json:"text"`
+	ID          int         `json:"message_id"`
+	From        User        `json:"from"`
+	Chat        Chat        `json:"chat"`
+	Date        int64       `json:"date"`
+	Text        string      `json:"text"`
+	ReplyMarkup interface{} `json:"reply_markup"`
 }
 
 // User represents a Telegram user or bot.
 type User struct {
 	ID        int    `json:"id"`
 	FirstName string `json:"first_name"`
+	IsBot     bool   `json:"is_bot"`
 	UserName  string `json:"username"`
 }
 

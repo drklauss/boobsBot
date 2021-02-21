@@ -50,7 +50,7 @@ func loadKeyboards() {
 	for _, c := range config.Get().Categories {
 		btn := InlineKeyboardButton{
 			Text:         c.Name,
-			CallbackData: c.Name,
+			CallbackData: "/" + c.Name,
 		}
 		btns = append(btns, btn)
 	}
@@ -59,6 +59,20 @@ func loadKeyboards() {
 		InlineKeyboard: keyboards,
 	}
 	// admin
+	adminKeyboard = createAdminKeyboard()
+}
+
+// GetAdminKeyboard returns admin keyboard.
+func GetAdminKeyboard() *ReplyKeyboardMarkup {
+	return adminKeyboard
+}
+
+// GetCategoriesInlineKeyboard returns categories keyboard.
+func GetCategoriesInlineKeyboard() *InlineKeyboardMarkup {
+	return categoriesKeyboard
+}
+
+func createAdminKeyboard() *ReplyKeyboardMarkup {
 	btnDebugStart := KeyboardButton{
 		Text:            "/debugStart",
 		RequestContact:  false,
@@ -74,20 +88,21 @@ func loadKeyboards() {
 		RequestContact:  false,
 		RequestLocation: false,
 	}
-	adminKeyboard = &ReplyKeyboardMarkup{
-		Keyboard:        [][]KeyboardButton{{btnDebugStart, btnDebugStop, btnUpdate}},
+	btnTopViewers := KeyboardButton{
+		Text:            "/topViewers",
+		RequestContact:  false,
+		RequestLocation: false,
+	}
+	btnCategoriesStat := KeyboardButton{
+		Text:            "/categoriesStat",
+		RequestContact:  false,
+		RequestLocation: false,
+	}
+
+	return &ReplyKeyboardMarkup{
+		Keyboard:        [][]KeyboardButton{{btnDebugStart, btnDebugStop, btnTopViewers, btnCategoriesStat, btnUpdate}},
 		OneTimeKeyboard: true,
 		ResizeKeyboard:  true,
 		Selective:       false,
 	}
-}
-
-// GetAdminKeyboard returns admin keyboard.
-func GetAdminKeyboard() *ReplyKeyboardMarkup {
-	return adminKeyboard
-}
-
-// GetCategoriesInlineKeyboard returns categories keyboard.
-func GetCategoriesInlineKeyboard() *InlineKeyboardMarkup {
-	return categoriesKeyboard
 }
