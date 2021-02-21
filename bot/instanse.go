@@ -8,14 +8,11 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/drklauss/boobsBot/model"
-
-	"github.com/jinzhu/gorm"
-
-	"github.com/leesper/holmes"
-
 	"github.com/drklauss/boobsBot/config"
+	"github.com/drklauss/boobsBot/model"
 	"github.com/drklauss/boobsBot/telegram"
+	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -23,7 +20,7 @@ const (
 	dbSQL  = "./db.sql"
 )
 
-// Bot is a BOT =)
+// Bot is a BOT =).
 type Bot struct {
 	middlewares []Middleware
 	handlers    map[string]HandlFunc
@@ -31,15 +28,17 @@ type Bot struct {
 	db          *gorm.DB
 }
 
-// HandlFunc is a command handler
+// HandlFunc is a command handler.
 type HandlFunc func(ctx context.Context, u *telegram.Update)
 
 // New returns a bot Bot
 func New(c *config.Config) (*Bot, error) {
+	log.Debug("initialize bot...")
 	if err := telegram.Init(c.Telegram); err != nil {
 		return nil, err
 	}
 
+	log.Debug("connect to db...")
 	db, err := gorm.Open("sqlite3", dbPath)
 	if err != nil || !db.HasTable(&model.Item{}) {
 		db, err = tryCreateDb()
@@ -47,21 +46,23 @@ func New(c *config.Config) (*Bot, error) {
 			return nil, err
 		}
 	}
+	log.Debug("db is connected")
 
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	//if err != nil {
+	//	fmt.Println(err)
+	//	os.Exit(1)
+	//}
 
-	if err != nil {
-		return nil, err
-	}
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	b := &Bot{
 		config:   c,
 		handlers: make(map[string]HandlFunc),
 		db:       db,
 	}
+	log.Debug("bot is created")
 	return b, nil
 }
 
@@ -77,6 +78,7 @@ func (b *Bot) Handle(path string, h HandlFunc) {
 
 // Run starts the bot
 func (b *Bot) Run() {
+	log.Debug("run bot...")
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	ctx = SetDB(ctx, b.db)
@@ -94,11 +96,11 @@ func (b *Bot) Run() {
 			u, err := telegram.GetUpdateEntities()
 
 			if err != nil {
-				holmes.Warnf("could not get updates: %v", err)
+				log.Warnf("could not get updates: %v", err)
 				upTries++
 				if upTries >= 10 {
 					restPeriod := 20 * b.config.Telegram.Time.Update
-					holmes.Warnf("gone for sleep for %d seconds", restPeriod)
+					log.Warnf("gone for sleep for %d seconds", restPeriod)
 					time.Sleep(time.Duration(restPeriod) * time.Second)
 				}
 				continue
@@ -114,7 +116,7 @@ func (b *Bot) Run() {
 	signal.Notify(signalCh, os.Interrupt)
 	<-signalCh
 	cancel()
-	holmes.Warnln("recieved sigkill, waiting for 3 seconds and ending...")
+	log.Warnln("received sigkill, waiting for 3 seconds and ending...")
 	time.Sleep(3 * time.Second)
 }
 
@@ -123,11 +125,11 @@ func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 		go func(i int, ctx context.Context) {
 			for upd := range *updates {
 				if isTooOldUpdate(&upd, b.config.Telegram.Time.SkipMessages) {
-					holmes.Debugf("sorry, it is a very old update %v ", u)
+					log.Debugf("sorry, it is a very old update %v ", upd)
 					continue
 				}
 
-				holmes.Debugf("worker %d processing %d from %+v with text \"%s\"", i, upd.UpdateID, upd.Message.From, upd.Message.Text)
+				log.Debugf("worker %d processing %d from %+v with text \"%s\"", i, upd.UpdateID, upd.Message.From, upd.Message.Text)
 				hCommand, okCommand := b.handlers[upd.Message.Text]
 				hCallback, okCallback := b.handlers[upd.CallBackQuery.Data]
 				// simple text command handler
@@ -148,13 +150,14 @@ func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 					hCallback(ctx, &upd)
 					continue
 				}
-				holmes.Infof("incorrect command processed: %v", upd.Message.Text)
+				log.Infof("incorrect command processed: %v", upd.Message.Text)
 			}
 		}(i, ctx)
 	}
 }
 
 func tryCreateDb() (*gorm.DB, error) {
+	log.Debug("create db...")
 	_, err := os.Create(dbPath)
 	if err != nil {
 		return nil, err

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/drklauss/boobsBot/telegram"
-	"github.com/leesper/holmes"
+	log "github.com/sirupsen/logrus"
 )
 
 // Categories returns all cateories available for request
@@ -12,11 +12,11 @@ func Categories(ctx context.Context, u *telegram.Update) {
 	ms := telegram.MessageSend{
 		ChatID:         u.Message.Chat.ID,
 		Text:           "Choose category from list",
-		KeyboardMarkup: telegram.GetCategoriesInlineKeayboard(),
+		KeyboardMarkup: telegram.GetCategoriesInlineKeyboard(),
 	}
 	err := ms.Send()
 	if err != nil {
-		holmes.Errorln(err)
+		log.Errorln(err)
 		return
 	}
 }

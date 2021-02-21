@@ -6,5 +6,5 @@ import (
 	"github.com/drklauss/boobsBot/telegram"
 )
 
-// Empty does nothing
+// Empty does nothing.
 func Empty(ctx context.Context, u *telegram.Update) {}

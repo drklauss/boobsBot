@@ -5,11 +5,11 @@ import (
 )
 
 var (
-	adminKeydoard      *ReplyKeyboardMarkup
+	adminKeyboard      *ReplyKeyboardMarkup
 	categoriesKeyboard *InlineKeyboardMarkup
 )
 
-// ReplyKeyboardMarkup is reply keyboard markup
+// ReplyKeyboardMarkup is reply keyboard markup.
 type ReplyKeyboardMarkup struct {
 	Keyboard        [][]KeyboardButton `json:"keyboard"`
 	ResizeKeyboard  bool               `json:"resize_keyboard"`
@@ -17,25 +17,25 @@ type ReplyKeyboardMarkup struct {
 	Selective       bool               `json:"selective"`
 }
 
-// ReplyKeyboardRemove removes ReplyKeyboard
+// ReplyKeyboardRemove removes ReplyKeyboard.
 type ReplyKeyboardRemove struct {
 	RemoveKeyboard bool `json:"remove_keyboard"`
 	Selective      bool `json:"selective"`
 }
 
-// KeyboardButton is a button for ReplyKeyboardMarkup
+// KeyboardButton is a button for ReplyKeyboardMarkup.
 type KeyboardButton struct {
 	Text            string `json:"text"`
 	RequestContact  bool   `json:"request_contact"`
 	RequestLocation bool   `json:"request_location"`
 }
 
-// InlineKeyboardMarkup is a inline keyboard
+// InlineKeyboardMarkup is a inline keyboard.
 type InlineKeyboardMarkup struct {
 	InlineKeyboard [][]InlineKeyboardButton `json:"inline_keyboard"`
 }
 
-// InlineKeyboardButton is a button for inline keyboard
+// InlineKeyboardButton is a button for inline keyboard.
 type InlineKeyboardButton struct {
 	Text                         string `json:"text"`
 	URL                          string `json:"url"`
@@ -74,20 +74,20 @@ func loadKeyboards() {
 		RequestContact:  false,
 		RequestLocation: false,
 	}
-	adminKeydoard = &ReplyKeyboardMarkup{
-		Keyboard:        [][]KeyboardButton{[]KeyboardButton{btnDebugStart, btnDebugStop, btnUpdate}},
+	adminKeyboard = &ReplyKeyboardMarkup{
+		Keyboard:        [][]KeyboardButton{{btnDebugStart, btnDebugStop, btnUpdate}},
 		OneTimeKeyboard: true,
 		ResizeKeyboard:  true,
 		Selective:       false,
 	}
 }
 
-// GetAdminKeayboard returns admin keyboard
-func GetAdminKeayboard() *ReplyKeyboardMarkup {
-	return adminKeydoard
+// GetAdminKeyboard returns admin keyboard.
+func GetAdminKeyboard() *ReplyKeyboardMarkup {
+	return adminKeyboard
 }
 
-// GetCategoriesInlineKeayboard returns categories keyboard
-func GetCategoriesInlineKeayboard() *InlineKeyboardMarkup {
+// GetCategoriesInlineKeyboard returns categories keyboard.
+func GetCategoriesInlineKeyboard() *InlineKeyboardMarkup {
 	return categoriesKeyboard
 }

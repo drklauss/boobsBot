@@ -3,23 +3,23 @@ package reddit
 import (
 	"regexp"
 
-	"github.com/leesper/holmes"
+	log "github.com/sirupsen/logrus"
 )
 
 var reMedia *regexp.Regexp
 
-// Converter converts SubredditResponse into slice of Elements
+// Converter converts SubredditResponse into slice of Elements.
 type Converter struct {
 	items []Element
 }
 
-// Element is a ready for sending or storing in db structure
+// Element is a ready for sending or storing in db structure.
 type Element struct {
 	URL     string
 	Caption string
 }
 
-// NewConverter returns converter instanse
+// NewConverter returns converter instance.
 func NewConverter() (*Converter, error) {
 	reMedia = regexp.MustCompile(`\.(png|jpg|jpeg|gif|mp4)`)
 	c := new(Converter)
@@ -27,7 +27,7 @@ func NewConverter() (*Converter, error) {
 	return c, nil
 }
 
-// Run starts convert process
+// Run starts convert process.
 func (c *Converter) Run(sr *SubRedditResponse) []*Element {
 	results := make(chan *Element, 25)
 	data := make(chan Data, 25)
@@ -45,7 +45,7 @@ func (c *Converter) Run(sr *SubRedditResponse) []*Element {
 	for k := 1; k <= len(sr.Data.Children); k++ {
 		el := <-results
 		if el != nil {
-			holmes.Debugf("got converted element: %+v", el)
+			log.Debugf("got converted element: %+v", el)
 			elements = append(elements, el)
 		}
 	}
@@ -54,17 +54,17 @@ func (c *Converter) Run(sr *SubRedditResponse) []*Element {
 	return elements
 }
 
-// worker processed
+// worker processes convert
 func (c *Converter) worker(i int, data chan Data, results chan *Element) {
 	for oneEl := range data {
-		holmes.Debugf("worker %d processing %v", i, oneEl)
+		log.Debugf("worker %d processing %v", i, oneEl)
 		switch oneEl.Domain {
 		case "giant.gfycat.com":
 			fallthrough
 		case "gfycat.com":
 			el, err := c.processingGfycat(oneEl)
 			if err != nil {
-				holmes.Warnf("could not process element: %v", err)
+				log.Warnf("could not process element: %v", err)
 			}
 			results <- el
 		case "i.imgur.com":
@@ -72,14 +72,14 @@ func (c *Converter) worker(i int, data chan Data, results chan *Element) {
 		case "imgur.com":
 			el, err := c.processingImgur(oneEl)
 			if err != nil {
-				holmes.Warnf("could not process element: %v", err)
+				log.Warnf("could not process element: %v", err)
 			}
 
 			results <- el
 		case "i.redd.it":
 			results <- &Element{URL: oneEl.URL, Caption: oneEl.Title}
 		default:
-			holmes.Warnf("unknown domain name: %s", oneEl.Domain)
+			log.Warnf("unknown domain name: %s", oneEl.Domain)
 			results <- nil
 		}
 	}

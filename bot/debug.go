@@ -9,14 +9,14 @@ type debug struct {
 	value bool
 }
 
-// SetDebug changes debug state for bot
+// SetDebug changes debug state for bot.
 func SetDebug(debug bool) {
 	d.mx.Lock()
 	d.value = debug
 	d.mx.Unlock()
 }
 
-// Debug returns whether bot is in debug or not
+// Debug returns whether bot is in debug or not.
 func Debug() bool {
 	return d.value
 }

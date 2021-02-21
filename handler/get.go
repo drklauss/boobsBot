@@ -5,28 +5,26 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jinzhu/gorm"
-
 	"github.com/drklauss/boobsBot/bot"
 	"github.com/drklauss/boobsBot/model"
-	"github.com/leesper/holmes"
-
 	"github.com/drklauss/boobsBot/telegram"
+	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 )
 
-// Get main handler that handles requests from chats
+// Get main handler that handles requests from chats.
 func Get(ctx context.Context, u *telegram.Update) {
 	conn, err := bot.GetDB(ctx)
 	if err != nil {
-		holmes.Warnln(err)
+		log.Warnln(err)
 	}
 	cat, err := bot.GetCategory(ctx)
 	if err != nil {
-		holmes.Warnln(err)
+		log.Warnln(err)
 	}
 	item, err := getItem(conn, u.Message.Chat.ID, *cat)
 	if err != nil {
-		holmes.Errorln(err)
+		log.Errorln(err)
 		return
 	}
 	acq := telegram.AnswerCallbackQuery{
@@ -44,7 +42,7 @@ func Get(ctx context.Context, u *telegram.Update) {
 
 	err = ms.Send()
 	if err != nil {
-		holmes.Errorln(err)
+		log.Errorln(err)
 		return
 	}
 	go writeStat(conn, &u.Message.Chat, item)
@@ -57,7 +55,7 @@ func writeStat(conn *gorm.DB, chat *telegram.Chat, item *model.Item) {
 		Type:  chat.Type,
 	}
 	if err := conn.FirstOrCreate(&c, c).Error; err != nil {
-		holmes.Warnf("could not create chat entry: %v", err)
+		log.Warnf("could not create chat entry: %v", err)
 		return
 	}
 
@@ -67,7 +65,7 @@ func writeStat(conn *gorm.DB, chat *telegram.Chat, item *model.Item) {
 		RequestDate: time.Now().Unix(),
 	}
 	if err := conn.Create(v).Error; err != nil {
-		holmes.Warnf("could not create view entry: %v", err)
+		log.Warnf("could not create view entry: %v", err)
 	}
 
 }

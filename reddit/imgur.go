@@ -10,6 +10,8 @@ import (
 	"github.com/drklauss/boobsBot/config"
 )
 
+const imgurApiURL = "https://api.imgur.com/3/"
+
 type imgurItem struct {
 	Data struct {
 		Mp4  string `json:"mp4"`
@@ -26,9 +28,9 @@ func (c *Converter) processingImgur(d Data) (*Element, error) {
 		}
 		return el, nil
 	}
-	apiURL := "https://api.imgur.com/3/image/"
+	apiURL := imgurApiURL + "image/"
 	if strings.Contains(d.URL, "/gallery/") {
-		apiURL = "https://api.imgur.com/3/gallery/"
+		apiURL = imgurApiURL + "gallery/"
 	}
 	var item imgurItem
 	client := new(http.Client)

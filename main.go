@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"runtime/trace"
 
@@ -10,24 +11,26 @@ import (
 	"github.com/drklauss/boobsBot/config"
 	"github.com/drklauss/boobsBot/handler"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"github.com/leesper/holmes"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-
 	defer trace.Stop()
 	f, _ := os.Create("out.trace")
-	trace.Start(f)
+	if err := trace.Start(f); err != nil {
+		fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
+		os.Exit(1)
+	}
 	debug := flag.Bool("debug", false, "enable debug")
 	flag.Parse()
 	if err := config.Load(); err != nil {
 		fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
 		os.Exit(1)
 	}
-	initLogger(debug)
+	initLogger(*debug)
 	b, err := bot.New(config.Get())
 	if err != nil {
-		holmes.Fatalf("could not create bot %v", err)
+		log.Fatalf("could not create bot %v", err)
 	}
 	b.Handle("/admin", handler.Empty)
 	b.Handle("/debugStart", handler.Empty)
@@ -44,16 +47,21 @@ func main() {
 }
 
 // Logger initializing
-// todo swap logger to logrus
-func initLogger(debug *bool) holmes.Logger {
-	middlewares := []func(holmes.Logger) holmes.Logger{
-		holmes.LogFilePath(config.Get().LogPath),
-		holmes.InfoLevel,
-	}
-	if *debug {
-		middlewares = append(middlewares, holmes.DebugLevel)
-		middlewares = append(middlewares, holmes.AlsoStdout)
+func initLogger(debug bool) {
+	file, err := os.OpenFile(config.Get().LogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err == nil {
+		if debug {
+			mw := io.MultiWriter(os.Stdout, file)
+			log.SetOutput(mw)
+		} else {
+			log.SetOutput(file)
+		}
+	} else {
+		log.Info("Failed to log to file, using default stderr")
 	}
 
-	return holmes.Start(middlewares...)
+	log.SetLevel(log.InfoLevel)
+	if debug {
+		log.SetLevel(log.DebugLevel)
+	}
 }

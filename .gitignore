@@ -1,8 +1,10 @@
 .idea
 .vscode
-glide.lock
 config.yml
 db.sqlite3
 boobsBot
 /vendor
 /log/*.*
+/bin
+out.trace
+/log

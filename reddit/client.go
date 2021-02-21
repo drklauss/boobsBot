@@ -2,18 +2,17 @@ package reddit
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
-
-	"github.com/leesper/holmes"
-
 	"github.com/drklauss/boobsBot/config"
+	log "github.com/sirupsen/logrus"
 )
 
 var rClient *client
@@ -25,7 +24,7 @@ const (
 	agent       = "My Boobs Bot v2.0 (by dr.klauss)"
 )
 
-// client is a reddit client
+// client is a reddit client.
 type client struct {
 	config *config.Reddit
 	token  *TokenResponse
@@ -33,7 +32,7 @@ type client struct {
 	last   map[string]string
 }
 
-// Init reddit client
+// Init reddit client.
 func Init(c *config.Reddit) error {
 	if rClient != nil {
 		return nil
@@ -43,7 +42,8 @@ func Init(c *config.Reddit) error {
 		sender: &http.Client{},
 		last:   make(map[string]string),
 	}
-	if !isGoodToken() {
+	if err := isGoodToken(); err != nil {
+		log.Warnf("error check token: %v", err)
 		err := refreshToken()
 		if err != nil {
 			return err
@@ -52,9 +52,10 @@ func Init(c *config.Reddit) error {
 	return nil
 }
 
-// GetItems gets the SubRedditResponse
+// GetItems gets the SubRedditResponse.
 func GetItems(catPath string) (*SubRedditResponse, error) {
-	if !isGoodToken() {
+	if err := isGoodToken(); err != nil {
+		log.Warnf("error check token: %v", err)
 		err := refreshToken()
 		if err != nil {
 			return nil, err
@@ -76,7 +77,11 @@ func GetItems(catPath string) (*SubRedditResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("error close body: %v", err)
+		}
+	}()
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -84,6 +89,8 @@ func GetItems(catPath string) (*SubRedditResponse, error) {
 	subResp := SubRedditResponse{Category: catPath}
 	err = json.Unmarshal(respBody, &subResp)
 	if err != nil {
+		log.Debug(string(respBody))
+		os.Exit(0)
 		return nil, err
 	}
 	if len(subResp.Data.Children) == 0 {
@@ -95,6 +102,7 @@ func GetItems(catPath string) (*SubRedditResponse, error) {
 }
 
 func refreshToken() error {
+	log.Debug("refresh reddit token...")
 	params := url.Values{}
 	params.Set("grant_type", "password")
 	params.Set("username", rClient.config.Username)
@@ -104,38 +112,58 @@ func refreshToken() error {
 	req.Header.Set("User-Agent", agent)
 	resp, err := rClient.sender.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "could not send token request")
+		return fmt.Errorf("could not send token request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("error close body: %v", err)
+		}
+	}()
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "could not read body with token")
+		return fmt.Errorf("could not read body with token: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		errResp := ErrorResponse{}
+		err = json.Unmarshal(respBody, &errResp)
+		if err != nil {
+			return fmt.Errorf("could not unmarshall ErrorResponse: %w", err)
+		}
+		return &errResp
 	}
 	err = json.Unmarshal(respBody, &rClient.token)
+	log.Debug(string(respBody))
 	if err != nil {
-		return errors.Wrap(err, "could not unmarshall token")
+		return fmt.Errorf("could not unmarshall token: %w", err)
 	}
+	log.Debugf("new toket is: %v", rClient.token)
 
 	return nil
 }
 
-// Проверяет действителен ли токен
-func isGoodToken() bool {
+// isGoodToken checks token.
+func isGoodToken() error {
 	if rClient.token == nil {
-		holmes.Warnln("token is nil")
-		return false
+		return errors.New("token is nil")
 	}
 	req, _ := http.NewRequest("GET", getMeURL, nil)
 	req.Header.Set("User-Agent", agent)
 	resp, err := rClient.sender.Do(req)
 	if err != nil {
-		holmes.Warnf("could not check token: %v", err)
-		return false
+		return fmt.Errorf("could not check token: %w", err)
+	}
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read body: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		holmes.Warnf("it seems token is bad, cause status code is %d", resp.StatusCode)
-		return false
+		errResp := ErrorResponse{}
+		err = json.Unmarshal(respBody, &errResp)
+		if err != nil {
+			return fmt.Errorf("could not unmarshall ErrorResponse: %w", err)
+		}
+		return &errResp
 	}
 
-	return true
+	return nil
 }
