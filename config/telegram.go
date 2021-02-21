@@ -1,6 +1,6 @@
 package config
 
-// Telegram contains configs for telegram
+// Telegram contains configs for telegram.
 type Telegram struct {
 	Workers int `yaml:"workers"`
 	Proxy   *struct {

@@ -3,7 +3,7 @@ package config
 import (
 	"io/ioutil"
 
-	"github.com/go-yaml/yaml"
+	"gopkg.in/yaml.v2"
 )
 
 var cfg Config

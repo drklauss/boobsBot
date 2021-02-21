@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-// Response is a telegram response
+// Response is a telegram response.
 type Response struct {
 	Ok     bool     `json:"ok"`
 	Result []Update `json:"result"`
 }
 
 // Update object represents an incoming update.
-// At most one of the optional parameters can be present in any given update
+// At most one of the optional parameters can be present in any given update.
 type Update struct {
 	UpdateID      int           `json:"update_id"`
 	Message       Message       `json:"message"`
@@ -22,7 +22,7 @@ type Update struct {
 // CallbackQuery object represents an incoming callback query from a callback button in an inline keyboard.
 // If the button that originated the query was attached to a message sent by the bot, the field message will be present.
 // If the button was attached to a message sent via the bot (in inline mode), the field inline_message_id will be present.
-// Exactly one of the fields data or game_short_name will be present
+// Exactly one of the fields data or game_short_name will be present.
 type CallbackQuery struct {
 	ID      string  `json:"id"`
 	From    User    `json:"from"`
@@ -40,7 +40,7 @@ type AnswerCallbackQuery struct {
 	URL             string `json:"url"`
 }
 
-// Message represents message
+// Message represents message.
 type Message struct {
 	ID   int    `json:"message_id"`
 	From User   `json:"from"`
@@ -49,14 +49,14 @@ type Message struct {
 	Text string `json:"text"`
 }
 
-// User represents a Telegram user or bot
+// User represents a Telegram user or bot.
 type User struct {
 	ID        int    `json:"id"`
 	FirstName string `json:"first_name"`
 	UserName  string `json:"username"`
 }
 
-// Chat represents chat
+// Chat represents chat.
 type Chat struct {
 	ID                          int    `json:"id"`
 	Title                       string `json:"title"`
@@ -64,19 +64,19 @@ type Chat struct {
 	AllMembersAreAdministrators bool   `json:"all_members_are_administrators"`
 }
 
-// MessageSend is message entity
+// MessageSend is message entity.
 type MessageSend struct {
 	ChatID         int
 	Text           string
 	KeyboardMarkup interface{}
 }
 
-// Send sends simple text message
+// Send sends simple text message.
 func (ms *MessageSend) Send() error {
 	return SendMessage(*ms)
 }
 
-// MediaSend is message entity with media content
+// MediaSend is message entity with media content.
 type MediaSend struct {
 	ChatID         int
 	URL            string
@@ -84,7 +84,7 @@ type MediaSend struct {
 	KeyboardMarkup interface{}
 }
 
-// Send sends message with media content
+// Send sends message with media content.
 func (c *MediaSend) Send() error {
 	uSplit := strings.Split(c.URL, ".")
 	if len(uSplit) <= 0 {

@@ -7,15 +7,15 @@ import (
 	"github.com/drklauss/boobsBot/config"
 
 	"github.com/drklauss/boobsBot/telegram"
-	"github.com/leesper/holmes"
+	log "github.com/sirupsen/logrus"
 )
 
-// Middleware func allows to create some middlewares to use them in handlers
+// Middleware func allows to create some middlewares to use them in handlers.
 type Middleware func(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc
 
-// CheckAdmin interrupts special admin requests and apply special things
+// CheckAdmin interrupts special admin requests and apply special things.
 func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc {
-	defaultHanlder := func(ctx context.Context, u *telegram.Update) {
+	defaultHandler := func(ctx context.Context, u *telegram.Update) {
 		next(ctx, u)
 	}
 	isAdmin := false
@@ -25,7 +25,7 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 		}
 	}
 	if !isAdmin {
-		return defaultHanlder
+		return defaultHandler
 	}
 
 	var ms telegram.MessageSend
@@ -46,27 +46,27 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 		ms = telegram.MessageSend{
 			ChatID:         u.Message.Chat.ID,
 			Text:           "admin kb",
-			KeyboardMarkup: telegram.GetAdminKeayboard(),
+			KeyboardMarkup: telegram.GetAdminKeyboard(),
 		}
 	default:
 		if isAdmin && Debug() {
-			holmes.Infoln("all non-admin commands will be ignored during debug")
+			log.Infoln("all non-admin commands will be ignored during debug")
 			return func(ctx context.Context, u *telegram.Update) {}
 		}
-		return defaultHanlder
+		return defaultHandler
 	}
 	err := ms.Send()
 	if err != nil {
-		holmes.Warnln(err)
+		log.Warnln(err)
 	}
 	return func(ctx context.Context, u *telegram.Update) {}
 }
 
-// LogRequest is a dev middleware, that just logs the request data
+// LogRequest is a dev middleware, that just logs the request data.
 func LogRequest(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc {
 	return func(ctx context.Context, u *telegram.Update) {
 		t := time.Now()
 		next(ctx, u)
-		holmes.Infof("update %d handled in: %v", u.UpdateID, time.Since(t))
+		log.Infof("update %d handled in: %v", u.UpdateID, time.Since(t))
 	}
 }

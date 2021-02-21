@@ -7,17 +7,17 @@ telegram:
     user: 'user'
     password: 'password'
   api: 'https://api.telegram.org/bot'
-  token: '728447533:AAGcrjS44c86oAStJd85sdWhfGcPIReMiw8'
-  admin: [78312428]
+  token: 'your bot token'
+  admin: [hear admin ids per comma]
   time: 
     update: 3
     skip_messages: 60
 imgur:
-  clientID: '19ba7ce0380f407'
-  secret: '5271a3ce82a946a64bd46fc72837798dac447418'
+  clientID: 'your id'
+  secret: 'and secret'
 reddit:
-  clientID: 'sdOdEs1uIvXN8v'
-  secret: 'VwJV78wkMlGD2pvNQGyeagHpzl8'
+  clientID: 'id again'
+  secret: 'and secret'
   username: 'user'
   password: 'password'
   limit: 50

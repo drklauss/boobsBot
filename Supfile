@@ -14,9 +14,6 @@ networks:
       - groall@c9333.abcp.ru:22022
 
 commands:
-  deps:
-    desc: Установка зависимостей через glide
-    local: glide install
   go_build:
     desc: Сборка
     local: go build -o ./bin/$SERVICE_NAME main.go

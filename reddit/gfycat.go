@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const gfycatApiURL = "https://api.gfycat.com/v1/gfycats/"
+
 type gfyItem struct {
 	GfyItem struct {
 		MobileURL string `json:"mobileUrl"`
@@ -18,7 +20,7 @@ func (c *Converter) processingGfycat(d Data) (*Element, error) {
 	client := new(http.Client)
 	paths := strings.Split(d.URL, "/")
 	hash := paths[len(paths)-1]
-	req, _ := http.NewRequest("GET", "https://api.gfycat.com/v1/gfycats/"+hash, nil)
+	req, _ := http.NewRequest("GET", gfycatApiURL+hash, nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

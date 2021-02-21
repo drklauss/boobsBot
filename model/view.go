@@ -6,7 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// View holds item views from chats
+// View holds item views from chats.
 type View struct {
 	db          *gorm.DB
 	ItemID      int   `gorm:"column:itemId"`
@@ -14,17 +14,17 @@ type View struct {
 	RequestDate int64 `gorm:"column:requestDate"`
 }
 
-// TableName returns name of the View table
+// TableName returns name of the View table.
 func (View) TableName() string {
 	return "Views"
 }
 
-// NewView return new View entity
+// NewView return new View entity.
 func NewView(db *gorm.DB) *View {
 	return &View{db: db}
 }
 
-// Clear erases all views for user by category
+// Clear erases all views for user by category.
 func (v *View) Clear(chatID int, category string) error {
 	sql := fmt.Sprintf(`
 	DELETE FROM Views

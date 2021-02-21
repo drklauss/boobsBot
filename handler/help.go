@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/leesper/holmes"
-
 	"github.com/drklauss/boobsBot/telegram"
+	log "github.com/sirupsen/logrus"
 )
 
-// Help is a helping command
+// Help sends a helping command.
 func Help(ctx context.Context, u *telegram.Update) {
 	buf := new(bytes.Buffer)
 	buf.WriteString("We offer you hot girls from popular categories \xF0\x9F\x98\x9C \n")
@@ -25,6 +24,6 @@ func Help(ctx context.Context, u *telegram.Update) {
 		Text:   buf.String(),
 	}
 	if err := mes.Send(); err != nil {
-		holmes.Warnf("could not send message: %v", err)
+		log.Warnf("could not send message: %v", err)
 	}
 }

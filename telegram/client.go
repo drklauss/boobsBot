@@ -1,44 +1,54 @@
 package telegram
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/drklauss/boobsBot/config"
-	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/proxy"
 )
 
 var tClient *client
 
-// client is a telegram client
+// client is a telegram client.
 type client struct {
 	config       *config.Telegram
 	sender       *http.Client
 	lastUpdateID int
 }
 
-// Init initialize client
+// Init initialize client.
 func Init(c *config.Telegram) error {
 	httpClient := &http.Client{}
 	loadKeyboards()
 	if c.Proxy != nil {
-		a := &proxy.Auth{
-			User:     c.Proxy.User,
-			Password: c.Proxy.Password,
+		var a *proxy.Auth
+		if c.Proxy.User != "" {
+			a = &proxy.Auth{
+				User:     c.Proxy.User,
+				Password: c.Proxy.Password,
+			}
 		}
 		address := fmt.Sprintf("%s:%d", c.Proxy.Server, c.Proxy.Port)
 		dialer, err := proxy.SOCKS5("tcp", address, a, proxy.Direct)
+		dialContext := func(ctx context.Context, network, address string) (net.Conn, error) {
+			return dialer.Dial(network, address)
+		}
 		if err != nil {
 			return fmt.Errorf("could not dial to proxy %v: %v", c.Proxy, err)
 		}
 		httpClient.Transport = &http.Transport{
-			Dial: dialer.Dial,
+			DialContext: dialContext,
+			//Dial: dialer.Dial,
 		}
+		log.Debugf("proxy is used %s:%d", c.Proxy.Server, c.Proxy.Port)
 	}
 	tClient = &client{
 		config: c,
@@ -48,7 +58,7 @@ func Init(c *config.Telegram) error {
 	return nil
 }
 
-// GetUpdateEntities returns telegram updates
+// GetUpdateEntities returns telegram updates.
 func GetUpdateEntities() ([]Update, error) {
 	var response Response
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
@@ -58,19 +68,19 @@ func GetUpdateEntities() ([]Update, error) {
 	u.RawQuery = params.Encode()
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not create request")
+		return nil, fmt.Errorf("could not create request: %w", err)
 	}
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
-		return response.Result, errors.Wrap(err, "could not make request")
+		return response.Result, fmt.Errorf("could not make request: %w", err)
 	}
 	defer resp.Body.Close()
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return response.Result, errors.Wrap(err, "could not read body")
+		return response.Result, fmt.Errorf("could not read body: %w", err)
 	}
 	if err = json.Unmarshal(responseBody, &response); err != nil {
-		return response.Result, errors.Wrap(err, "could not unmarshall body")
+		return response.Result, fmt.Errorf("could not unmarshall body: %w", err)
 	}
 	updLen := len(response.Result)
 	if updLen > 0 {
@@ -79,7 +89,7 @@ func GetUpdateEntities() ([]Update, error) {
 	return response.Result, nil
 }
 
-// SendMessage sends text message into chat
+// SendMessage sends text message into chat.
 func SendMessage(mes MessageSend) error {
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
 	u.Path += "/sendMessage"
@@ -89,26 +99,26 @@ func SendMessage(mes MessageSend) error {
 	if mes.KeyboardMarkup != nil {
 		b, err := json.Marshal(mes.KeyboardMarkup)
 		if err != nil {
-			return errors.Wrap(err, "could not marshall keyboard")
+			return fmt.Errorf("could not marshall keyboard: %w", err)
 		}
 		params.Set("reply_markup", fmt.Sprintf("%s", b))
 	}
 	u.RawQuery = params.Encode()
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
-		return errors.Wrap(err, "could not create request")
+		return fmt.Errorf("could not create request: %w", err)
 	}
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 	return nil
 }
 
-// SendImage sends image into chat
+// SendImage sends image into chat.
 func SendImage(photo MediaSend) error {
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
 	u.Path += "/sendPhoto"
@@ -119,28 +129,28 @@ func SendImage(photo MediaSend) error {
 	if photo.KeyboardMarkup != nil {
 		b, err := json.Marshal(photo.KeyboardMarkup)
 		if err != nil {
-			return errors.Wrap(err, "could not marshall keyboard")
+			return fmt.Errorf("could not marshall keyboard: %w", err)
 		}
 		params.Set("reply_markup", fmt.Sprintf("%s", b))
 	}
 	u.RawQuery = params.Encode()
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
-		return errors.Wrap(err, "could not create request")
+		return fmt.Errorf("could not create request: %w", err)
 	}
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 
 	return nil
 }
 
-// SendDocument sends document into chat
+// SendDocument sends document into chat.
 func SendDocument(doc MediaSend) error {
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
 	u.Path += "/sendDocument"
@@ -151,27 +161,27 @@ func SendDocument(doc MediaSend) error {
 	if doc.KeyboardMarkup != nil {
 		b, err := json.Marshal(doc.KeyboardMarkup)
 		if err != nil {
-			return errors.Wrap(err, "could not marshall keyboard")
+			return fmt.Errorf("could not marshall keyboard: %w", err)
 		}
 		params.Set("reply_markup", fmt.Sprintf("%s", b))
 	}
 	u.RawQuery = params.Encode()
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
-		return errors.Wrap(err, "could not create request")
+		return fmt.Errorf("could not create request: %w", err)
 	}
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 	return nil
 }
 
-// SendAnswerCallbackQuery sends query answer
+// SendAnswerCallbackQuery sends query answer.
 func SendAnswerCallbackQuery(acq AnswerCallbackQuery) error {
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
 	u.Path += "/answerCallbackQuery"
@@ -185,15 +195,15 @@ func SendAnswerCallbackQuery(acq AnswerCallbackQuery) error {
 	u.RawQuery = params.Encode()
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
-		return errors.Wrap(err, "could not create request")
+		return fmt.Errorf("could not create request: %w", err)
 	}
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "could not make request")
+		return fmt.Errorf("could not make request: %w", err)
 	}
 	return nil
 }

@@ -1,12 +1,18 @@
 package reddit
 
-// ErrorResponse is a reddit error response
+import "fmt"
+
+// ErrorResponse is a reddit error response.
 type ErrorResponse struct {
-	Message string `json:"message"`
-	Error   int    `json:"error"`
+	Message   string `json:"message"`
+	ErrorCode int    `json:"error"`
 }
 
-// TokenResponse needs for token update
+func (er *ErrorResponse) Error() string {
+	return fmt.Sprintf("error request to reddit API: code=%d, messages=%s", er.ErrorCode, er.Message)
+}
+
+// TokenResponse needs for token update.
 type TokenResponse struct {
 	Token     string `json:"access_token"`
 	Type      string `json:"token_type"`
@@ -14,7 +20,7 @@ type TokenResponse struct {
 	Scope     string `json:"scope"`
 }
 
-// SubRedditResponse is a subreddit response, that contains unneccesary info
+// SubRedditResponse is a subreddit response, that contains unnecessary info.
 type SubRedditResponse struct {
 	Data struct {
 		Children []struct {
@@ -24,7 +30,7 @@ type SubRedditResponse struct {
 	Category string
 }
 
-// Data is internal subreddit field, that contains necessary information for url convertation
+// Data is internal subreddit field, that contains necessary information for url convert.
 type Data struct {
 	Domain string `json:"domain"`
 	URL    string `json:"url"`
@@ -32,7 +38,7 @@ type Data struct {
 	Title  string `json:"title"`
 }
 
-// Convert converts part of the reddit request into entities ready for write into db
+// Convert converts part of the reddit request into entities ready for write into db.
 func (sr *SubRedditResponse) Convert() []*Element {
 	c, _ := NewConverter()
 	return c.Run(sr)
