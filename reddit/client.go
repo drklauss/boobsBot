@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 
@@ -89,8 +88,6 @@ func GetItems(catPath string) (*SubRedditResponse, error) {
 	subResp := SubRedditResponse{Category: catPath}
 	err = json.Unmarshal(respBody, &subResp)
 	if err != nil {
-		log.Debug(string(respBody))
-		os.Exit(0)
 		return nil, err
 	}
 	if len(subResp.Data.Children) == 0 {
@@ -131,8 +128,8 @@ func refreshToken() error {
 		}
 		return &errResp
 	}
+
 	err = json.Unmarshal(respBody, &rClient.token)
-	log.Debug(string(respBody))
 	if err != nil {
 		return fmt.Errorf("could not unmarshall token: %w", err)
 	}
@@ -156,6 +153,7 @@ func isGoodToken() error {
 	if err != nil {
 		return fmt.Errorf("could not read body: %w", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		errResp := ErrorResponse{}
 		err = json.Unmarshal(respBody, &errResp)

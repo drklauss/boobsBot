@@ -74,10 +74,10 @@ func (i *Item) Count(cat string) (int, error) {
 	return c, nil
 }
 
-// Fill fills item data.
+// Fill fills item data up with random item from database.
 func (i *Item) Fill(chatID int) error {
 	sql := fmt.Sprintf(`
-	SELECT *
+	SELECT Items.*
 	FROM Items
 	WHERE category="%s" AND id NOT IN
 		(SELECT i.id
@@ -85,14 +85,9 @@ func (i *Item) Fill(chatID int) error {
 		LEFT JOIN Views as v
 			ON v.itemId = i.id
 		WHERE v.chatId = %d)
-	ORDER BY RANDOM()
-	LIMIT 1`, i.Category, chatID)
-	err := i.db.Raw(sql).Find(&i).Error
-	if err != nil {
-		return fmt.Errorf("could not fill item: %v", err)
-	}
+	ORDER BY RANDOM()`, i.Category, chatID)
 
-	return nil
+	return i.db.Raw(sql).Take(&i).Error
 }
 
 func prepareInsertValues(cat string, els []*reddit.Element) []string {

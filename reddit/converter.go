@@ -67,6 +67,12 @@ func (c *Converter) worker(i int, data chan Data, results chan *Element) {
 				log.Warnf("could not process element: %v", err)
 			}
 			results <- el
+		case "redgifs.com":
+			el, err := c.processingRedgifs(oneEl)
+			if err != nil {
+				log.Warnf("could not process element: %v", err)
+			}
+			results <- el
 		case "i.imgur.com":
 			fallthrough
 		case "imgur.com":
