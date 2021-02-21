@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"context"
@@ -14,38 +14,49 @@ import (
 
 // Get main handler that handles requests from chats.
 func Get(ctx context.Context, u *telegram.Update) {
-	conn, err := bot.GetDB(ctx)
+	db, err := bot.GetDB(ctx)
 	if err != nil {
 		log.Warnln(err)
+		return
 	}
 	cat, err := bot.GetCategory(ctx)
 	if err != nil {
 		log.Warnln(err)
+		return
 	}
-	item, err := getItem(conn, u.Message.Chat.ID, *cat)
+	item, err := getItem(db, u.Message.Chat.ID, *cat)
 	if err != nil {
 		log.Errorln(err)
 		return
 	}
-	acq := telegram.AnswerCallbackQuery{
-		CallbackQueryID: u.CallBackQuery.ID,
-		Text:            "Nice choice, maaaan!",
-		URL:             item.URL,
+
+	if u.CallBackQuery.ID != "" {
+		acq := telegram.AnswerCallbackQuery{
+			CallbackQueryID: u.CallBackQuery.ID,
+			Text:            "Nice choice, maaaan!",
+			URL:             item.URL,
+		}
+
+		err = telegram.SendAnswerCallbackQuery(acq)
+		if err != nil {
+			log.Errorln(err)
+			return
+		}
+	} else {
+		ms := telegram.MediaSend{
+			ChatID:  u.Message.Chat.ID,
+			URL:     item.URL,
+			Caption: item.Caption,
+		}
+
+		err = ms.Send()
+		if err != nil {
+			log.Errorln(err)
+			return
+		}
 	}
 
-	telegram.SendAnswerCallbackQuery(acq)
-	ms := telegram.MediaSend{
-		ChatID:  u.CallBackQuery.Message.Chat.ID,
-		URL:     item.URL,
-		Caption: item.Caption,
-	}
-
-	err = ms.Send()
-	if err != nil {
-		log.Errorln(err)
-		return
-	}
-	go writeStat(conn, &u.Message.Chat, item)
+	go writeStat(db, &u.Message.Chat, item)
 }
 
 func writeStat(conn *gorm.DB, chat *telegram.Chat, item *model.Item) {

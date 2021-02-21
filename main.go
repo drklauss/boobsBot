@@ -9,7 +9,7 @@ import (
 
 	"github.com/drklauss/boobsBot/bot"
 	"github.com/drklauss/boobsBot/config"
-	"github.com/drklauss/boobsBot/handler"
+	"github.com/drklauss/boobsBot/handlers"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	log "github.com/sirupsen/logrus"
 )
@@ -32,15 +32,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not create bot %v", err)
 	}
-	b.Handle("/admin", handler.Empty)
-	b.Handle("/debugStart", handler.Empty)
-	b.Handle("/debugStop", handler.Empty)
-	b.Handle("/help", handler.Help)
-	b.Handle("/rate", handler.Rate)
-	b.Handle("/update", handler.Update)
-	b.Handle("/categories", handler.Categories)
+	b.Handle("/admin", handlers.Empty)
+	b.Handle("/debugStart", handlers.Empty)
+	b.Handle("/debugStop", handlers.Empty)
+	b.Handle("/help", handlers.Help)
+	b.Handle("/rate", handlers.Rate)
+	b.Handle("/update", handlers.Update)
+	b.Handle("/categories", handlers.Categories)
 	for _, c := range config.Get().Categories {
-		b.Handle(c.Name, handler.Get)
+		b.Handle("/"+c.Name, handlers.Get)
 	}
 	b.UseMiddlewares(bot.LogRequest, bot.CheckAdmin)
 	b.Run()

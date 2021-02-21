@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Categories returns all cateories available for request
+// Categories returns all categories available for request.
 func Categories(ctx context.Context, u *telegram.Update) {
 	ms := telegram.MessageSend{
 		ChatID:         u.Message.Chat.ID,

@@ -47,6 +47,7 @@ func New(c *config.Config) (*Bot, error) {
 		}
 	}
 	log.Debug("db is connected")
+	db = db.Debug()
 
 	//if err != nil {
 	//	fmt.Println(err)
@@ -134,9 +135,13 @@ func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 				hCallback, okCallback := b.handlers[upd.CallBackQuery.Data]
 				// simple text command handler
 				if okCommand {
-					ctx = SetCategory(ctx, &upd.Message.Text)
-					for _, m := range b.middlewares {
-						hCommand = m(ctx, hCommand, &upd)
+					cat := upd.Message.Text
+					if len(cat) > 0 && cat[:1] == "/" {
+						cat = cat[1:]
+					}
+					ctx = SetCategory(ctx, &cat)
+					for _, middleware := range b.middlewares {
+						hCommand = middleware(ctx, hCommand, &upd)
 					}
 					hCommand(ctx, &upd)
 					continue

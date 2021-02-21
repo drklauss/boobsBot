@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/drklauss/boobsBot/config"
+	log "github.com/sirupsen/logrus"
 )
 
 const imgurApiURL = "https://api.imgur.com/3/"
@@ -43,8 +44,13 @@ func (c *Converter) processingImgur(d Data) (*Element, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("error close body: %v", err)
+		}
+	}()
+
 	respBody, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
 	if err != nil {
 		return nil, err
 	}

@@ -22,6 +22,7 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 	for _, adminID := range config.Get().Telegram.Admin {
 		if u.Message.From.ID == adminID {
 			isAdmin = true
+			break
 		}
 	}
 	if !isAdmin {
@@ -66,6 +67,7 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 func LogRequest(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc {
 	return func(ctx context.Context, u *telegram.Update) {
 		t := time.Now()
+		log.Infof("process %d message: %s", u.UpdateID, u.Message.Text)
 		next(ctx, u)
 		log.Infof("update %d handled in: %v", u.UpdateID, time.Since(t))
 	}

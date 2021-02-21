@@ -1,5 +1,7 @@
 package reddit
 
+// redgifs has the same api with gfycat
+
 import (
 	"encoding/json"
 	"io/ioutil"
@@ -9,20 +11,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const gfycatApiURL = "https://api.gfycat.com/v1/gfycats/"
+const redgifsApiURL = "https://api.redgifs.com/v1/gfycats/"
 
-type gfyItem struct {
-	GfyItem struct {
-		MobileURL string `json:"mobileUrl"`
-		GfyName   string `json:"gfyName"`
-	} `json:"gfyItem"`
-}
-
-func (c *Converter) processingGfycat(d Data) (*Element, error) {
+func (c *Converter) processingRedgifs(d Data) (*Element, error) {
 	client := new(http.Client)
 	paths := strings.Split(d.URL, "/")
 	hash := paths[len(paths)-1]
-	req, _ := http.NewRequest("GET", gfycatApiURL+hash, nil)
+	req, _ := http.NewRequest("GET", redgifsApiURL+hash, nil)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -32,6 +27,7 @@ func (c *Converter) processingGfycat(d Data) (*Element, error) {
 			log.Errorf("error close body: %v", err)
 		}
 	}()
+
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
