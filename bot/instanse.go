@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/drklauss/boobsBot/config"
@@ -23,13 +24,13 @@ const (
 // Bot is a BOT =).
 type Bot struct {
 	middlewares []Middleware
-	handlers    map[string]HandlFunc
+	handlers    map[string]HandlerFunc
 	config      *config.Config
 	db          *gorm.DB
 }
 
-// HandlFunc is a command handler.
-type HandlFunc func(ctx context.Context, u *telegram.Update)
+// HandlerFunc is a command handler.
+type HandlerFunc func(ctx context.Context, u *telegram.Update)
 
 // New returns a bot Bot
 func New(c *config.Config) (*Bot, error) {
@@ -60,7 +61,7 @@ func New(c *config.Config) (*Bot, error) {
 
 	b := &Bot{
 		config:   c,
-		handlers: make(map[string]HandlFunc),
+		handlers: make(map[string]HandlerFunc),
 		db:       db,
 	}
 	log.Debug("bot is created")
@@ -73,8 +74,10 @@ func (b *Bot) UseMiddlewares(ms ...Middleware) {
 }
 
 // Handle associate path, i.e. incoming command with handler func
-func (b *Bot) Handle(path string, h HandlFunc) {
+func (b *Bot) Handle(path string, h HandlerFunc) {
 	b.handlers[path] = h
+	// for presaved command
+	b.handlers[path+"@"+b.config.Telegram.BotName] = h
 }
 
 // Run starts the bot
@@ -124,9 +127,9 @@ func (b *Bot) Run() {
 func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 	for i := 1; i <= b.config.Telegram.Workers; i++ {
 		go func(i int, ctx context.Context) {
-			for upd := range *updates {
-				if isTooOldUpdate(&upd, b.config.Telegram.Time.SkipMessages) {
-					log.Debugf("sorry, it is a very old update %v ", upd)
+			for upd := range *updates { // iterate over income message
+				if isTooOldUpdate(&upd, b.config) {
+					log.Debugf("sorry, it is a very old update")
 					continue
 				}
 
@@ -136,8 +139,11 @@ func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 				// simple text command handler
 				if okCommand {
 					cat := upd.Message.Text
-					if len(cat) > 0 && cat[:1] == "/" {
+					if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
 						cat = cat[1:]
+					}
+					if strings.Index(cat, "@"+b.config.Telegram.BotName) > 0 {
+						cat = cat[:strings.Index(cat, "@"+b.config.Telegram.BotName)]
 					}
 					ctx = SetCategory(ctx, &cat)
 					for _, middleware := range b.middlewares {
@@ -148,7 +154,11 @@ func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
 				}
 				// inline callbacks handler
 				if okCallback {
-					ctx = SetCategory(ctx, &upd.CallBackQuery.Data)
+					cat := upd.CallBackQuery.Data
+					if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
+						cat = cat[1:]
+					}
+					ctx = SetCategory(ctx, &cat)
 					for _, m := range b.middlewares {
 						hCallback = m(ctx, hCallback, &upd)
 					}
@@ -183,18 +193,15 @@ func tryCreateDb() (*gorm.DB, error) {
 	return db, nil
 }
 
-func isTooOldUpdate(upd *telegram.Update, skip int64) bool {
+func isTooOldUpdate(upd *telegram.Update, config *config.Config) bool {
 	if upd.Message.Date != 0 {
-		if time.Now().Unix() > upd.Message.Date+skip {
-			return true
-		}
-		return false
+		log.Debugf("current time %d, message time %d, skip %d", time.Now().Unix(), upd.Message.Date, config.Telegram.Time.SkipMessages)
+		return time.Now().Unix() > upd.Message.Date+config.Telegram.Time.SkipMessages
 	}
+
 	if upd.CallBackQuery.Message.Date != 0 {
-		if time.Now().Unix() > upd.Message.Date+skip {
-			return true
-		}
-		return false
+		log.Debugf("current time %d, CallBackQuery message time %d, skip %d", time.Now().Unix(), upd.CallBackQuery.Message.Date, config.Telegram.Time.QuerySkipMessages)
+		return time.Now().Unix() > upd.CallBackQuery.Message.Date+config.Telegram.Time.QuerySkipMessages
 	}
 	return false
 }

@@ -24,9 +24,19 @@ func Get(ctx context.Context, u *telegram.Update) {
 		log.Warnln(err)
 		return
 	}
-	item, err := getItem(db, u.Message.Chat.ID, *cat)
+	var chatId int
+	if u.Message.Chat.ID != 0 {
+		chatId = u.Message.Chat.ID
+	} else {
+		chatId = u.CallBackQuery.Message.Chat.ID
+	}
+	item, err := getItem(db, chatId, *cat)
 	if err != nil {
 		log.Errorln(err)
+		return
+	}
+	if item == nil {
+		log.Warnf("could not get item for cat %s", *cat)
 		return
 	}
 
@@ -90,8 +100,7 @@ func getItem(db *gorm.DB, chatID int, cat string) (*model.Item, error) {
 			if err = model.NewView(db).Clear(chatID, cat); err != nil {
 				return nil, fmt.Errorf("could not clear views: %v", err)
 			}
-			item, err = getItem(db, chatID, cat)
-			if err != nil {
+			if err = item.Fill(chatID); err != nil {
 				return nil, err
 			}
 			return nil, nil

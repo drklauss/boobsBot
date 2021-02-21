@@ -26,12 +26,16 @@ func NewView(db *gorm.DB) *View {
 
 // Clear erases all views for user by category.
 func (v *View) Clear(chatID int, category string) error {
+	itemsTable := (new(Item)).TableName()
+	viewsTable := v.TableName()
 	sql := fmt.Sprintf(`
-	DELETE FROM Views
-	WHERE Views.urlId IN (
-		SELECT u.id FROM Urls AS u
-		INNER JOIN Views AS v ON u.id = v.urlId
-		WHERE u.category = "%s" AND v.chatId = %d
-	)`, category, chatID)
+	DELETE FROM %s AS v
+	WHERE v.itemId IN (
+		SELECT u.id 
+		FROM %s AS u
+			INNER JOIN %s AS v1 ON u.id = v1.itemId
+		WHERE u.category = "%s" AND v1.chatId = %d
+	)`, viewsTable, itemsTable, viewsTable, category, chatID)
+
 	return v.db.Exec(sql).Error
 }

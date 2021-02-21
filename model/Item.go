@@ -11,7 +11,7 @@ import (
 	"github.com/drklauss/boobsBot/reddit"
 )
 
-// Item contains main info - links to videofiles and its captions.
+// Item contains main info - links to video files and its captions.
 type Item struct {
 	db       *gorm.DB
 	ID       int    `gorm:"primary_key;column:id"`
@@ -51,8 +51,11 @@ func (i *Item) Save(cat string, els []*reddit.Element) (int, error) {
 	}
 
 	insertStr := strings.Join(insertRows, ",")
-	err = i.db.Exec(fmt.Sprintf("INSERT OR IGNORE INTO \"Items\" (\"category\",\"url\", \"hash\", \"caption\") VALUES %s", insertStr)).Error
-	if err != nil {
+	sql := fmt.Sprintf(`
+		INSERT OR IGNORE INTO "%s" 
+		("category","url", "hash", "caption") 
+		VALUES %s`, i.TableName(), insertStr)
+	if err = i.db.Exec(sql).Error; err != nil {
 		return 0, fmt.Errorf("could not save items: %v", err)
 	}
 
@@ -67,7 +70,7 @@ func (i *Item) Save(cat string, els []*reddit.Element) (int, error) {
 // Count counts items by category.
 func (i *Item) Count(cat string) (int, error) {
 	var c int
-	if err := i.db.Table("Items").Where("category=?", cat).Count(&c).Error; err != nil {
+	if err := i.db.Table(i.TableName()).Where("category=?", cat).Count(&c).Error; err != nil {
 		return 0, fmt.Errorf("could not count items by categories: %v", err)
 	}
 
@@ -76,16 +79,18 @@ func (i *Item) Count(cat string) (int, error) {
 
 // Fill fills item data up with random item from database.
 func (i *Item) Fill(chatID int) error {
+	itemsTable := i.TableName()
+	viewsTable := (new(View)).TableName()
 	sql := fmt.Sprintf(`
 	SELECT Items.*
-	FROM Items
+	FROM %s AS Items
 	WHERE category="%s" AND id NOT IN
 		(SELECT i.id
-		FROM Items as i
-		LEFT JOIN Views as v
+		FROM %s as i
+		LEFT JOIN %s as v
 			ON v.itemId = i.id
 		WHERE v.chatId = %d)
-	ORDER BY RANDOM()`, i.Category, chatID)
+	ORDER BY RANDOM()`, itemsTable, i.Category, itemsTable, viewsTable, chatID)
 
 	return i.db.Raw(sql).Take(&i).Error
 }

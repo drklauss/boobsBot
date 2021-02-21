@@ -38,7 +38,10 @@ func main() {
 	b.Handle("/help", handlers.Help)
 	b.Handle("/rate", handlers.Rate)
 	b.Handle("/update", handlers.Update)
+	b.Handle("/topViewers", handlers.TopViewers)
+	b.Handle("/categoriesStat", handlers.CategoriesStat)
 	b.Handle("/categories", handlers.Categories)
+	b.Handle("/cats", handlers.Categories)
 	for _, c := range config.Get().Categories {
 		b.Handle("/"+c.Name, handlers.Get)
 	}

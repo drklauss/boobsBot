@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -74,18 +75,25 @@ func GetUpdateEntities() ([]Update, error) {
 	if err != nil {
 		return response.Result, fmt.Errorf("could not make request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Errorf("error close body: %v", err)
+		}
+	}()
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return response.Result, fmt.Errorf("could not read body: %w", err)
 	}
+
 	if err = json.Unmarshal(responseBody, &response); err != nil {
 		return response.Result, fmt.Errorf("could not unmarshall body: %w", err)
 	}
+
 	updLen := len(response.Result)
 	if updLen > 0 {
 		tClient.lastUpdateID = response.Result[updLen-1].UpdateID
 	}
+
 	return response.Result, nil
 }
 
@@ -201,9 +209,24 @@ func SendAnswerCallbackQuery(acq AnswerCallbackQuery) error {
 	if err != nil {
 		return fmt.Errorf("could not make request: %w", err)
 	}
-
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("could not make request: %w", err)
 	}
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read body: %w", err)
+	}
+	log.Debug(string(responseBody))
+	response := struct {
+		OK bool `json:"ok"`
+	}{}
+	if err = json.Unmarshal(responseBody, &response); err != nil {
+		return fmt.Errorf("could not unmarshall body: %w", err)
+	}
+
+	if !response.OK {
+		return errors.New("returned false")
+	}
+
 	return nil
 }

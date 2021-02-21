@@ -11,10 +11,10 @@ import (
 )
 
 // Middleware func allows to create some middlewares to use them in handlers.
-type Middleware func(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc
+type Middleware func(ctx context.Context, next HandlerFunc, u *telegram.Update) HandlerFunc
 
 // CheckAdmin interrupts special admin requests and apply special things.
-func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc {
+func CheckAdmin(ctx context.Context, next HandlerFunc, u *telegram.Update) HandlerFunc {
 	defaultHandler := func(ctx context.Context, u *telegram.Update) {
 		next(ctx, u)
 	}
@@ -46,7 +46,7 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 	case "/admin":
 		ms = telegram.MessageSend{
 			ChatID:         u.Message.Chat.ID,
-			Text:           "admin kb",
+			Text:           "admin keyboard open",
 			KeyboardMarkup: telegram.GetAdminKeyboard(),
 		}
 	default:
@@ -64,7 +64,7 @@ func CheckAdmin(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFu
 }
 
 // LogRequest is a dev middleware, that just logs the request data.
-func LogRequest(ctx context.Context, next HandlFunc, u *telegram.Update) HandlFunc {
+func LogRequest(ctx context.Context, next HandlerFunc, u *telegram.Update) HandlerFunc {
 	return func(ctx context.Context, u *telegram.Update) {
 		t := time.Now()
 		log.Infof("process %d message: %s", u.UpdateID, u.Message.Text)
