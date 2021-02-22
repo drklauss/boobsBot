@@ -2,8 +2,9 @@ version: 0.4
 
 env:
   DIR: /opt/boobs_bot
-  DB_NAME: db.sqlite3     # Имя БД
-  SERVICE_NAME: boobs_bot # Имя сервиса
+  DB_NAME: db.sqlite3     # db file's name
+  SERVICE_NAME: boobs_bot # service's name
+  CONFIG_NAME: config.yml # config's name
 
 networks:
   local:
@@ -11,41 +12,73 @@ networks:
       - localhost
   prod:
     hosts:
-      - groall@c9333.abcp.ru:22022
+      - root@10.93.24.108:22022
 
 commands:
   go_build:
-    desc: Сборка
+    desc: Build
     local: go build -o ./bin/$SERVICE_NAME main.go
-  # Команды для деплоя не сервере
+  check_service:
+    desc: Check service is active
+    run: if [ "`systemctl is-active $SERVICE_NAME`" != "active" ]; then exit 1; else exit 0; fi
   backup_service:
-    desc: Бэкап сервиса
+    desc: Backup of service
     run: mkdir -p $DIR/bck/`date +%Y%m%d_%H%M` && cp $DIR/$SERVICE_NAME $DIR/bck/`date +%Y%m%d_%H%M`/$SERVICE_NAME
-  backup_db:
-      desc: Бэкап БД
-      run: cp $DIR/$DB_NAME $DIR/bck/`date +%Y%m%d_%H%M`/$DB_NAME
-  prepare_service:
-    desc: Подготовка сервиса к загрузке
-    local: cp ./bin/$SERVICE_NAME ./$SERVICE_NAME
+  stop_service:
+    desc: Stop service
+    run: systemctl stop $SERVICE_NAME
   upload_service:
-    desc: Загружаем новую версию сервиса
+    desc: Upload service binary file
     upload:
-      - src: ./$SERVICE_NAME
+      - src: ./bin/$SERVICE_NAME
         dst: $DIR/
+  fix_upload:
+    desc: Relocate uploaded file and delete unused folder
+    run: rm -fR $DIR/$SERVICE_NAME && mv $DIR/bin/$SERVICE_NAME $DIR/$SERVICE_NAME && rm -fR $DIR/bin
+  start_service:
+    desc: Run service
+    run: systemctl start $SERVICE_NAME
+  clean_bck:
+    desc: Clean backups
+    run: find $DIR/bck/ -mtime +180 -type d -printf "%T+ %p\n"|sort -r|head -n -1 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+    run: find $DIR/bck/ -mtime +150 -type d -printf "%T+ %p\n"|sort -r|head -n -2 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+    run: find $DIR/bck/ -mtime +120 -type d -printf "%T+ %p\n"|sort -r|head -n -3 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+    run: find $DIR/bck/ -mtime +90 -type d -printf "%T+ %p\n"|sort -r|head -n -4 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+    run: find $DIR/bck/ -mtime +60 -type d -printf "%T+ %p\n"|sort -r|head -n -5 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+    run: find $DIR/bck/ -mtime +30 -type d -printf "%T+ %p\n"|sort -r|head -n -6 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+    run: find $DIR/bck/ -mtime +0 -type d -printf "%T+ %p\n"|sort -r|head -n -16 | cut -d ' ' -f 2- | sed -e 's/^/"/' -e 's/$/"/' | xargs rm -r -f
+  backup_db:
+    desc: Backup of database
+    run: mkdir -p $DIR/bck/`date +%Y%m%d_%H%M` && cp $DIR/$DB_NAME $DIR/bck/`date +%Y%m%d_%H%M`/$DB_NAME
   upload_db:
-    desc: Загружаем $DB_NAME
+    desc: Upload $DB_NAME
     upload:
       - src: ./$DB_NAME
         dst: $DIR/
-  clear_temp_services:
-      desc: Очистка ненужных файлов сервисов
-      local: rm ./$SERVICE_NAME
+  backup_config:
+    desc: Backup of config
+    run: mkdir -p $DIR/bck/`date +%Y%m%d_%H%M` && cp $DIR/$CONFIG_NAME $DIR/bck/`date +%Y%m%d_%H%M`/$CONFIG_NAME
+  upload_config:
+    desc: Upload $CONFIG_NAME
+    upload:
+      - src: ./$CONFIG_NAME
+        dst: $DIR/
 
 targets:
   deploy:
-    - backup_service
-    - backup_db
-    - prepare_service
+    - go_build
+    #- check_service
+    #- backup_service
+    #- backup_db
+    - stop_service
     - upload_service
-#    - upload_db
-    - clear_temp_services
+    - fix_upload
+    - start_service
+    - check_service
+    - clean_bck
+  upload_db:
+    - backup_db
+    - upload_db
+  upload_config:
+    - backup_config
+    - upload_config
