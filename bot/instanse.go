@@ -104,7 +104,6 @@ func (b *Bot) getUpdates(ctx context.Context, updates chan<- telegram.Update) {
 		default:
 		}
 		u, err := telegram.GetUpdateEntities()
-
 		if err != nil {
 			log.Warnf("could not get updates: %v", err)
 			attempts++
