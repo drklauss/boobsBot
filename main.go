@@ -15,18 +15,22 @@ import (
 )
 
 func main() {
-	defer trace.Stop()
-	f, _ := os.Create("out.trace")
-	if err := trace.Start(f); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
-		os.Exit(1)
-	}
 	debug := flag.Bool("debug", false, "enable debug")
 	flag.Parse()
+	if *debug {
+		defer trace.Stop()
+		f, _ := os.Create("out.trace")
+		if err := trace.Start(f); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
+			os.Exit(1)
+		}
+	}
+
 	if err := config.Load(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
 		os.Exit(1)
 	}
+
 	initLogger(*debug)
 
 	b, err := bot.New(config.Get(), *debug)
