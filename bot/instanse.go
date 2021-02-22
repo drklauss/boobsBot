@@ -18,7 +18,7 @@ import (
 
 const (
 	dbPath = "./db.sqlite3"
-	dbSQL  = "./db.sql"
+	dbSQL  = "./deployments/db.sql"
 )
 
 // Bot is a BOT =).
