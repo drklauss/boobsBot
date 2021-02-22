@@ -85,6 +85,10 @@ func GetUpdateEntities() ([]Update, error) {
 		return response.Result, fmt.Errorf("could not read body: %w", err)
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		return response.Result, fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
+	}
+
 	if err = json.Unmarshal(responseBody, &response); err != nil {
 		return response.Result, fmt.Errorf("could not unmarshall body: %w", err)
 	}
@@ -112,17 +116,26 @@ func SendMessage(mes MessageSend) error {
 		params.Set("reply_markup", fmt.Sprintf("%s", b))
 	}
 	u.RawQuery = params.Encode()
+
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %w", err)
 	}
+
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
 		return fmt.Errorf("could not make request: %w", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("could not make request: %w", err)
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read body: %w", err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
+	}
+
 	return nil
 }
 
@@ -142,17 +155,24 @@ func SendImage(photo MediaSend) error {
 		params.Set("reply_markup", fmt.Sprintf("%s", b))
 	}
 	u.RawQuery = params.Encode()
+
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %w", err)
 	}
+
 	resp, err := tClient.sender.Do(req)
 	if err != nil {
 		return fmt.Errorf("could not make request: %w", err)
 	}
 
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read body: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("could not make request: %w", err)
+		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
 	}
 
 	return nil
@@ -183,9 +203,15 @@ func SendDocument(doc MediaSend) error {
 		return fmt.Errorf("could not make request: %w", err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("could not make request: %w", err)
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read body: %w", err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
+	}
+
 	return nil
 }
 
@@ -209,22 +235,22 @@ func SendAnswerCallbackQuery(acq AnswerCallbackQuery) error {
 	if err != nil {
 		return fmt.Errorf("could not make request: %w", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("could not make request: %w", err)
-	}
+
 	responseBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("could not read body: %w", err)
 	}
-	log.Debug(string(responseBody))
-	response := struct {
-		OK bool `json:"ok"`
-	}{}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	var response = Response{}
 	if err = json.Unmarshal(responseBody, &response); err != nil {
 		return fmt.Errorf("could not unmarshall body: %w", err)
 	}
 
-	if !response.OK {
+	if !response.Ok {
 		return errors.New("returned false")
 	}
 

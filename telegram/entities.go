@@ -11,6 +11,13 @@ type Response struct {
 	Result []Update `json:"result"`
 }
 
+// ResponseError is a telegram error response.
+//type ResponseError struct {
+//	Ok          bool   `json:"ok"`
+//	ErrorCode   int    `json:"error_code"`
+//	Description string `json:"description"`
+//}
+
 // Update object represents an incoming update.
 // At most one of the optional parameters can be present in any given update.
 type Update struct {
