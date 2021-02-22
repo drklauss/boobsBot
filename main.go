@@ -32,26 +32,29 @@ func main() {
 	}
 
 	initLogger(*debug)
+	handlers.InitKeyboards()
 
 	b, err := bot.New(config.Get(), *debug)
 	if err != nil {
 		log.Fatalf("could not create bot %v", err)
 	}
 
-	b.Handle("/admin", handlers.Empty)
-	b.Handle("/debugStart", handlers.Empty)
-	b.Handle("/debugStop", handlers.Empty)
+	b.Handle(handlers.Admin, handlers.AdminHandler)
+	b.Handle(handlers.DebugStart, handlers.DebugStartHandler)
+	b.Handle(handlers.DebugStop, handlers.DebugStopHandler)
+	b.Handle(handlers.Update, handlers.UpdateHandler)
+	b.Handle(handlers.TopViewers, handlers.TopViewersHandler)
+	b.Handle(handlers.CategoriesStat, handlers.CategoriesStatHandler)
+	b.Handle("/start", handlers.Start)
 	b.Handle("/help", handlers.Help)
 	b.Handle("/rate", handlers.Rate)
-	b.Handle("/update", handlers.Update)
-	b.Handle("/topViewers", handlers.TopViewers)
-	b.Handle("/categoriesStat", handlers.CategoriesStat)
 	b.Handle("/categories", handlers.Categories)
 	b.Handle("/cats", handlers.Categories)
 	for _, c := range config.Get().Categories {
 		b.Handle("/"+c.Name, handlers.Get)
 	}
-	b.UseMiddlewares(bot.LogRequest, bot.CheckAdmin)
+
+	b.UseMiddlewares(bot.LogRequest)
 
 	b.Run()
 }

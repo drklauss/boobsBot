@@ -5,10 +5,15 @@ import (
 	"strings"
 )
 
-// Response is a telegram response.
-type Response struct {
+// ResponseUpdate is a telegram response from getUpdate request.
+type ResponseUpdate struct {
 	Ok     bool     `json:"ok"`
 	Result []Update `json:"result"`
+}
+
+// Response is a telegram response.
+type Response struct {
+	Ok bool `json:"ok"`
 }
 
 // ResponseError is a telegram error response.
@@ -21,11 +26,11 @@ type Response struct {
 // Update object represents an incoming update.
 // At most one of the optional parameters can be present in any given update.
 type Update struct {
-	UpdateID      int           `json:"update_id"`
-	Message       Message       `json:"message"`
-	CallBackQuery CallbackQuery `json:"callback_query"`
-	//InlineQuery        InlineQuery        `json:"inline_query"`
-	//ChosenInlineResult ChosenInlineResult `json:"chosen_inline_result"`
+	UpdateID           int                `json:"update_id"`
+	Message            Message            `json:"message"`
+	CallBackQuery      CallbackQuery      `json:"callback_query"`
+	InlineQuery        InlineQuery        `json:"inline_query"`
+	ChosenInlineResult ChosenInlineResult `json:"chosen_inline_result"`
 }
 
 // InlineQuery This object represents an incoming inline query. When the user sends an empty query, your bot could return some default or trending results.
@@ -99,15 +104,15 @@ type Chat struct {
 	AllMembersAreAdministrators bool   `json:"all_members_are_administrators"`
 }
 
-// MessageSend is message entity.
-type MessageSend struct {
+// MessageConfig is message entity.
+type MessageConfig struct {
 	ChatID         int
 	Text           string
 	KeyboardMarkup interface{}
 }
 
 // Send sends simple text message.
-func (ms *MessageSend) Send() error {
+func (ms *MessageConfig) Send() error {
 	return SendMessage(*ms)
 }
 

@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 
 	"github.com/drklauss/boobsBot/config"
@@ -29,8 +28,15 @@ type Bot struct {
 	db          *gorm.DB
 }
 
+type HandlerRequest struct {
+	Ctx    context.Context
+	Update *telegram.Update
+	DB     *gorm.DB
+	Config *config.Config
+}
+
 // HandlerFunc is a command handler.
-type HandlerFunc func(ctx context.Context, u *telegram.Update)
+type HandlerFunc func(req HandlerRequest)
 
 // New returns a bot Bot
 func New(c *config.Config, debug bool) (*Bot, error) {
@@ -127,45 +133,35 @@ func (b *Bot) runWorkers(ctx context.Context, updates <-chan telegram.Update) {
 }
 
 func (b *Bot) worker(worker int, updates <-chan telegram.Update, ctx context.Context) {
-	for upd := range updates { // iterate over income message
+	var text string
+	for upd := range updates { // iterate over incoming message
 		if isTooOldUpdate(&upd, b.config) {
 			log.Debugf("sorry, it is a very old update")
 			continue
 		}
-
-		log.Debugf("worker %d processing %d from %+v with text \"%s\"", worker, upd.UpdateID, upd.Message.From, upd.Message.Text)
-		hCommand, okCommand := b.handlers[upd.Message.Text]
-		hCallback, okCallback := b.handlers[upd.CallBackQuery.Data]
-		// simple text command handler
-		if okCommand {
-			cat := upd.Message.Text
-			if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
-				cat = cat[1:]
+		if upd.Message.ID > 0 {
+			text = upd.Message.Text
+			log.Debugf("worker %d processing %d message from %s with text '%s'", worker, upd.UpdateID, upd.Message.From.UserName, text)
+		} else if upd.CallBackQuery.ID != "" {
+			text = upd.CallBackQuery.Data
+			log.Debugf("worker %d processing %d callback from %s with text '%s'", worker, upd.UpdateID, upd.Message.From.UserName, text)
+		} else {
+			text = ""
+		}
+		if hCommand, okCommand := b.handlers[text]; okCommand {
+			req := HandlerRequest{
+				Update: &upd,
+				Config: b.config,
+				Ctx:    ctx,
+				DB:     b.db,
 			}
-			if strings.Index(cat, "@"+b.config.Telegram.BotName) > 0 {
-				cat = cat[:strings.Index(cat, "@"+b.config.Telegram.BotName)]
-			}
-			ctx = SetCategory(ctx, &cat)
 			for _, middleware := range b.middlewares {
-				hCommand = middleware(ctx, hCommand, &upd)
+				hCommand = middleware(req, hCommand)
 			}
-			hCommand(ctx, &upd)
-			continue
+			hCommand(req)
+		} else {
+			log.Errorf("unknown command: %s", upd.Message.Text)
 		}
-		// inline callbacks handler
-		if okCallback {
-			cat := upd.CallBackQuery.Data
-			if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
-				cat = cat[1:]
-			}
-			ctx = SetCategory(ctx, &cat)
-			for _, m := range b.middlewares {
-				hCallback = m(ctx, hCallback, &upd)
-			}
-			hCallback(ctx, &upd)
-			continue
-		}
-		log.Infof("incorrect command processed: %v", upd.Message.Text)
 	}
 }
 

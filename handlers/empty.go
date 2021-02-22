@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"context"
-
-	"github.com/drklauss/boobsBot/telegram"
+	"github.com/drklauss/boobsBot/bot"
 )
 
 // Empty does nothing.
-func Empty(ctx context.Context, u *telegram.Update) {}
+func Empty(req bot.HandlerRequest) {}
