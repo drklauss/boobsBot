@@ -18,7 +18,7 @@ type Config struct {
 
 // Load reads .yml file and loads it
 func Load() error {
-	b, err := ioutil.ReadFile("../boobsBot/config.yml")
+	b, err := ioutil.ReadFile("./config.yml")
 	if err != nil {
 		return err
 	}

@@ -27,9 +27,9 @@ func TopViewers(ctx context.Context, u *telegram.Update) {
 	sql := fmt.Sprintf(`
 			SELECT c.title,
 					c.type,
-					count(c.id) AS count
+					COUNT(c.id) AS count
 			FROM %s v
-			LEFT JOIN %s c on
+			LEFT JOIN %s c ON
 				c.id = v.chatId
 			GROUP BY c.id
 			ORDER BY 3 DESC

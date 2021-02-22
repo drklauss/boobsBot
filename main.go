@@ -15,23 +15,29 @@ import (
 )
 
 func main() {
-	defer trace.Stop()
-	f, _ := os.Create("out.trace")
-	if err := trace.Start(f); err != nil {
-		fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
-		os.Exit(1)
-	}
 	debug := flag.Bool("debug", false, "enable debug")
 	flag.Parse()
+	if *debug {
+		defer trace.Stop()
+		f, _ := os.Create("out.trace")
+		if err := trace.Start(f); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
+			os.Exit(1)
+		}
+	}
+
 	if err := config.Load(); err != nil {
-		fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "could not load yml: %v", err)
 		os.Exit(1)
 	}
+
 	initLogger(*debug)
-	b, err := bot.New(config.Get())
+
+	b, err := bot.New(config.Get(), *debug)
 	if err != nil {
 		log.Fatalf("could not create bot %v", err)
 	}
+
 	b.Handle("/admin", handlers.Empty)
 	b.Handle("/debugStart", handlers.Empty)
 	b.Handle("/debugStop", handlers.Empty)
@@ -46,10 +52,11 @@ func main() {
 		b.Handle("/"+c.Name, handlers.Get)
 	}
 	b.UseMiddlewares(bot.LogRequest, bot.CheckAdmin)
+
 	b.Run()
 }
 
-// Logger initializing
+// initLogger initializes logger.
 func initLogger(debug bool) {
 	file, err := os.OpenFile(config.Get().LogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err == nil {

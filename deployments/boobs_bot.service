@@ -1,0 +1,19 @@
+[Unit]
+Description= Siskobot Service
+
+[Service]
+WorkingDirectory=/opt/boobs_bot
+ExecStart=/opt/boobs_bot/boobs_bot
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Type=simple
+Restart=always
+RestartSec=3
+PIDFile=/tmp/boobs_bot.pid
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=boobs_bot
+
+[Install]
+WantedBy=multi-user.target
+Alias=boobs_bot
