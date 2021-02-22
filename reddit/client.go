@@ -28,7 +28,6 @@ type client struct {
 	config *config.Reddit
 	token  *TokenResponse
 	sender *http.Client
-	last   map[string]string
 }
 
 // Init reddit client.
@@ -39,8 +38,13 @@ func Init(c *config.Reddit) error {
 	rClient = &client{
 		config: c,
 		sender: &http.Client{},
-		last:   make(map[string]string),
 	}
+
+	return checkToken()
+}
+
+// checkToken checks and refreshes token.
+func checkToken() error {
 	if err := isGoodToken(); err != nil {
 		log.Warnf("error check token: %v", err)
 		err := refreshToken()
@@ -52,23 +56,16 @@ func Init(c *config.Reddit) error {
 }
 
 // GetItems gets the SubRedditResponse.
-func GetItems(catPath string) (*SubRedditResponse, error) {
-	if err := isGoodToken(); err != nil {
-		log.Warnf("error check token: %v", err)
-		err := refreshToken()
-		if err != nil {
-			return nil, err
-		}
-	}
+func GetItems(catPath string, last string) (*SubRedditResponse, error) {
 	var err error
+	if err = checkToken(); err != nil {
+		return nil, err
+	}
 
 	req, _ := http.NewRequest("GET", apiURL+catPath, nil)
 	data := req.URL.Query()
 	data.Set("limit", strconv.Itoa(rClient.config.Limit))
-	data.Set("after", "")
-	if last, ok := rClient.last[catPath]; ok {
-		data.Set("after", last)
-	}
+	data.Set("after", last)
 	req.URL.RawQuery = data.Encode()
 	req.Header.Set("Authorization", "bearer "+rClient.token.Token)
 	req.Header.Set("User-Agent", agent)
@@ -85,19 +82,25 @@ func GetItems(catPath string) (*SubRedditResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	subResp := SubRedditResponse{Category: catPath}
-	err = json.Unmarshal(respBody, &subResp)
-	if err != nil {
+	if resp.StatusCode != http.StatusOK {
+		var errResp = ErrorResponse{}
+		if err = json.Unmarshal(respBody, &errResp); err != nil {
+			return nil, fmt.Errorf("could not unmarshall ErrorResponse: %w", err)
+		}
+		return nil, &errResp
+	}
+	var subResp = SubRedditResponse{Category: catPath}
+	if err = json.Unmarshal(respBody, &subResp); err != nil {
 		return nil, err
 	}
 	if len(subResp.Data.Children) == 0 {
 		return nil, fmt.Errorf("subreddit children is empty")
 	}
-	rClient.last[catPath] = subResp.Data.Children[len(subResp.Data.Children)-1].Data.Name
 
 	return &subResp, nil
 }
 
+// refreshToken gets new token.
 func refreshToken() error {
 	log.Debug("refresh reddit token...")
 	params := url.Values{}
@@ -121,16 +124,14 @@ func refreshToken() error {
 		return fmt.Errorf("could not read body with token: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		errResp := ErrorResponse{}
-		err = json.Unmarshal(respBody, &errResp)
-		if err != nil {
+		var errResp = ErrorResponse{}
+		if err = json.Unmarshal(respBody, &errResp); err != nil {
 			return fmt.Errorf("could not unmarshall ErrorResponse: %w", err)
 		}
 		return &errResp
 	}
 
-	err = json.Unmarshal(respBody, &rClient.token)
-	if err != nil {
+	if err = json.Unmarshal(respBody, &rClient.token); err != nil {
 		return fmt.Errorf("could not unmarshall token: %w", err)
 	}
 	log.Debugf("new toket is: %v", rClient.token)
@@ -138,7 +139,7 @@ func refreshToken() error {
 	return nil
 }
 
-// isGoodToken checks token.
+// isGoodToken checks if token is alive.
 func isGoodToken() error {
 	if rClient.token == nil {
 		return errors.New("token is nil")
@@ -155,9 +156,8 @@ func isGoodToken() error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		errResp := ErrorResponse{}
-		err = json.Unmarshal(respBody, &errResp)
-		if err != nil {
+		var errResp = ErrorResponse{}
+		if err = json.Unmarshal(respBody, &errResp); err != nil {
 			return fmt.Errorf("could not unmarshall ErrorResponse: %w", err)
 		}
 		return &errResp

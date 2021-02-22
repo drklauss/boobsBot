@@ -42,9 +42,10 @@ func (i *Item) List(cat string) ([]Item, error) {
 func (i *Item) Save(cat string, els []*reddit.Element) (int, error) {
 	insertRows := prepareInsertValues(cat, els)
 	if len(insertRows) == 0 {
-		return 0, errors.New("empty items")
+		return 0, errors.New("no one element was inserted")
 	}
 
+	// count items in category before insert new
 	beforeCount, err := i.Count(cat)
 	if err != nil {
 		return 0, err
@@ -56,9 +57,10 @@ func (i *Item) Save(cat string, els []*reddit.Element) (int, error) {
 		("category","url", "hash", "caption") 
 		VALUES %s`, i.TableName(), insertStr)
 	if err = i.db.Exec(sql).Error; err != nil {
-		return 0, fmt.Errorf("could not save items: %v", err)
+		return 0, fmt.Errorf("could not insert items: %v", err)
 	}
 
+	// count items in category after insert new, some items could not inserted because they had been there before
 	afterCount, err := i.Count(cat)
 	if err != nil {
 		return 0, err
@@ -104,8 +106,8 @@ func prepareInsertValues(cat string, els []*reddit.Element) []string {
 		h := md5.New()
 		h.Write([]byte(el.URL))
 		md := h.Sum(nil)
-		cap := strings.Replace(el.Caption, `"`, `'`, -1)
-		insertRows = append(insertRows, fmt.Sprintf("(\"%s\", \"%s\", \"%x\", \"%s\")", cat, el.URL, md, cap))
+		caption := strings.Replace(el.Caption, `"`, `'`, -1)
+		insertRows = append(insertRows, fmt.Sprintf("(\"%s\", \"%s\", \"%x\", \"%s\")", cat, el.URL, md, caption))
 	}
 
 	return insertRows

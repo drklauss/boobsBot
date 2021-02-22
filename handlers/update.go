@@ -9,63 +9,90 @@ import (
 	"github.com/drklauss/boobsBot/model"
 	"github.com/drklauss/boobsBot/reddit"
 	"github.com/drklauss/boobsBot/telegram"
+	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	updateCount = 100
+	updateCount = 10
 )
 
 // Update gets links from reddit by categories and save them.
 func Update(ctx context.Context, u *telegram.Update) {
 	db, err := bot.GetDB(ctx)
-
 	if err != nil {
-		log.Warnln(err)
+		log.Error(err)
 		return
 	}
+
 	if err = reddit.Init(config.Get().Reddit); err != nil {
-		log.Warnf("could not initialize reddit client: %v", err)
+		log.Errorf("could not initialize reddit client: %v", err)
 		return
 	}
 	cc := config.Get().Reddit.Categories
-	item := model.NewItem(db)
 	for _, c := range cc {
-		go func(c config.Category) { // goroutine for each category
-			pathSaved := make(map[string]int)
-			for _, urlPath := range c.Source {
-				pathSaved[urlPath] = 0 // count saved items for each path for category
-				countErrs := 0
-				for pathSaved[urlPath] < updateCount && countErrs < 3 {
-					resp, err := reddit.GetItems(urlPath)
-					if err != nil {
-						countErrs++
-						log.Errorf("could not fetch items for %s with path %s: %v", c.Name, urlPath, err)
-						continue
-					}
-					els := resp.Convert()
-					if len(els) == 0 {
-						continue
-					}
-					count, err := item.Save(c.Name, els)
-					if err != nil {
-						countErrs++
-						log.Errorf("could not save items: %v", err)
-					}
-					pathSaved[urlPath] += count
-					log.Infof("fetched %d items for \"%s\" via \"%s\"", count, c.Name, urlPath)
-				}
-			}
-			var t string
-			for path, count := range pathSaved {
-				t = fmt.Sprintf("total fetched %d items for \"%s\" by %s", count, c, path)
-				log.Infoln(t)
-				ms := telegram.MessageSend{
-					ChatID: u.Message.Chat.ID,
-					Text:   t,
-				}
-				ms.Send()
-			}
-		}(c)
+		// goroutine for each category
+		// go
+		// remove goroutine - dont know reddit api limits for parallel requests
+		updateCategory(c, db, u.Message.Chat.ID)
 	}
+}
+
+type updateSubRedditResult struct {
+	fetched   int
+	converted int
+	inserted  int
+	errors    int
+}
+
+// updateCategory gets new posts from categories' subreddits.
+func updateCategory(c config.Category, db *gorm.DB, chatID int) {
+	results := make(map[string]updateSubRedditResult)
+	for _, subredditURI := range c.Source {
+		results[subredditURI] = updateSubReddit(c.Name, subredditURI, db)
+	}
+	var message string
+	message = fmt.Sprintf("Update has been completed for category '%s'\n", c.Name)
+	for subredditURI, result := range results {
+		message += fmt.Sprintf("- fetched %d converted %d inserted %d items for '%s' from subreddit '%s'", result.fetched, result.converted, result.inserted, c.Name, subredditURI)
+	}
+	log.Infoln(message)
+	ms := telegram.MessageSend{
+		ChatID: chatID,
+		Text:   message,
+	}
+	if err := ms.Send(); err != nil {
+		log.Errorf("error send message with update result to telegram: %v", err)
+	}
+}
+
+// updateSubReddit gets new posts from subreddit and saves them to db.
+func updateSubReddit(cat string, subredditURI string, db *gorm.DB) (result updateSubRedditResult) {
+	last := ""
+	countErrs := 0
+	for result.inserted < updateCount && countErrs < 3 {
+		resp, err := reddit.GetItems(subredditURI, last)
+		if err != nil {
+			countErrs++
+			log.Errorf("could not fetch items for '%s' from subreddit '%s': %v", cat, subredditURI, err)
+			continue
+		}
+		last = resp.Data.Children[len(resp.Data.Children)-1].Data.Name
+		result.fetched += len(resp.Data.Children)
+		els := resp.Convert()
+		if len(els) == 0 {
+			continue
+		}
+		result.converted += len(els)
+		item := model.NewItem(db)
+		insertedCount, err := item.Save(cat, els)
+		if err != nil {
+			countErrs++
+			log.Errorf("could not save items: %v", err)
+		}
+		result.inserted += insertedCount
+	}
+	log.Infof("fetched %d converted %d inserted %d items for '%s' from subreddit '%s'", result.fetched, result.converted, result.inserted, cat, subredditURI)
+
+	return result
 }

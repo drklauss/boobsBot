@@ -33,7 +33,7 @@ type Bot struct {
 type HandlerFunc func(ctx context.Context, u *telegram.Update)
 
 // New returns a bot Bot
-func New(c *config.Config) (*Bot, error) {
+func New(c *config.Config, debug bool) (*Bot, error) {
 	log.Debug("initialize bot...")
 	if err := telegram.Init(c.Telegram); err != nil {
 		return nil, err
@@ -48,16 +48,9 @@ func New(c *config.Config) (*Bot, error) {
 		}
 	}
 	log.Debug("db is connected")
-	db = db.Debug()
-
-	//if err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(1)
-	//}
-
-	//if err != nil {
-	//	return nil, err
-	//}
+	if debug {
+		db = db.Debug()
+	}
 
 	b := &Bot{
 		config:   c,
@@ -65,6 +58,7 @@ func New(c *config.Config) (*Bot, error) {
 		db:       db,
 	}
 	log.Debug("bot is created")
+
 	return b, nil
 }
 
@@ -86,37 +80,12 @@ func (b *Bot) Run() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	ctx = SetDB(ctx, b.db)
-	updates := make(chan telegram.Update)
+	var updates = make(chan telegram.Update)
 	defer close(updates)
-	upTries := 0
-	go func(ctx context.Context) {
-		for {
-			time.Sleep(time.Duration(b.config.Telegram.Time.Update) * time.Second)
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-			u, err := telegram.GetUpdateEntities()
+	go b.getUpdates(ctx, updates)
+	b.runWorkers(ctx, updates)
 
-			if err != nil {
-				log.Warnf("could not get updates: %v", err)
-				upTries++
-				if upTries >= 10 {
-					restPeriod := 20 * b.config.Telegram.Time.Update
-					log.Warnf("gone for sleep for %d seconds", restPeriod)
-					time.Sleep(time.Duration(restPeriod) * time.Second)
-				}
-				continue
-			}
-			for _, oneUp := range u {
-				updates <- oneUp
-			}
-			upTries = 0
-		}
-	}(ctx)
-	b.workerPool(ctx, &updates)
-	signalCh := make(chan os.Signal, 1)
+	var signalCh = make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
 	<-signalCh
 	cancel()
@@ -124,57 +93,86 @@ func (b *Bot) Run() {
 	time.Sleep(3 * time.Second)
 }
 
-func (b *Bot) workerPool(ctx context.Context, updates *chan telegram.Update) {
-	for i := 1; i <= b.config.Telegram.Workers; i++ {
-		go func(i int, ctx context.Context) {
-			for upd := range *updates { // iterate over income message
-				if isTooOldUpdate(&upd, b.config) {
-					log.Debugf("sorry, it is a very old update")
-					continue
-				}
+func (b *Bot) getUpdates(ctx context.Context, updates chan<- telegram.Update) {
+	var attempts = 0
+	var restPeriod = 20 * b.config.Telegram.Time.Update
+	for {
+		time.Sleep(time.Duration(b.config.Telegram.Time.Update) * time.Second)
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		u, err := telegram.GetUpdateEntities()
 
-				log.Debugf("worker %d processing %d from %+v with text \"%s\"", i, upd.UpdateID, upd.Message.From, upd.Message.Text)
-				hCommand, okCommand := b.handlers[upd.Message.Text]
-				hCallback, okCallback := b.handlers[upd.CallBackQuery.Data]
-				// simple text command handler
-				if okCommand {
-					cat := upd.Message.Text
-					if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
-						cat = cat[1:]
-					}
-					if strings.Index(cat, "@"+b.config.Telegram.BotName) > 0 {
-						cat = cat[:strings.Index(cat, "@"+b.config.Telegram.BotName)]
-					}
-					ctx = SetCategory(ctx, &cat)
-					for _, middleware := range b.middlewares {
-						hCommand = middleware(ctx, hCommand, &upd)
-					}
-					hCommand(ctx, &upd)
-					continue
-				}
-				// inline callbacks handler
-				if okCallback {
-					cat := upd.CallBackQuery.Data
-					if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
-						cat = cat[1:]
-					}
-					ctx = SetCategory(ctx, &cat)
-					for _, m := range b.middlewares {
-						hCallback = m(ctx, hCallback, &upd)
-					}
-					hCallback(ctx, &upd)
-					continue
-				}
-				log.Infof("incorrect command processed: %v", upd.Message.Text)
+		if err != nil {
+			log.Warnf("could not get updates: %v", err)
+			attempts++
+			if attempts >= 10 {
+				log.Warnf("gone for sleep for %d seconds", restPeriod)
+				time.Sleep(time.Duration(restPeriod) * time.Second)
 			}
-		}(i, ctx)
+			continue
+		}
+		for _, oneUp := range u {
+			updates <- oneUp
+		}
+		attempts = 0
+	}
+}
+
+func (b *Bot) runWorkers(ctx context.Context, updates <-chan telegram.Update) {
+	for i := 1; i <= b.config.Telegram.Workers; i++ {
+		go b.worker(i, updates, ctx)
+	}
+}
+
+func (b *Bot) worker(worker int, updates <-chan telegram.Update, ctx context.Context) {
+	for upd := range updates { // iterate over income message
+		if isTooOldUpdate(&upd, b.config) {
+			log.Debugf("sorry, it is a very old update")
+			continue
+		}
+
+		log.Debugf("worker %d processing %d from %+v with text \"%s\"", worker, upd.UpdateID, upd.Message.From, upd.Message.Text)
+		hCommand, okCommand := b.handlers[upd.Message.Text]
+		hCallback, okCallback := b.handlers[upd.CallBackQuery.Data]
+		// simple text command handler
+		if okCommand {
+			cat := upd.Message.Text
+			if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
+				cat = cat[1:]
+			}
+			if strings.Index(cat, "@"+b.config.Telegram.BotName) > 0 {
+				cat = cat[:strings.Index(cat, "@"+b.config.Telegram.BotName)]
+			}
+			ctx = SetCategory(ctx, &cat)
+			for _, middleware := range b.middlewares {
+				hCommand = middleware(ctx, hCommand, &upd)
+			}
+			hCommand(ctx, &upd)
+			continue
+		}
+		// inline callbacks handler
+		if okCallback {
+			cat := upd.CallBackQuery.Data
+			if len(cat) > 0 && cat[:1] == "/" { // cats saved in db without "/"
+				cat = cat[1:]
+			}
+			ctx = SetCategory(ctx, &cat)
+			for _, m := range b.middlewares {
+				hCallback = m(ctx, hCallback, &upd)
+			}
+			hCallback(ctx, &upd)
+			continue
+		}
+		log.Infof("incorrect command processed: %v", upd.Message.Text)
 	}
 }
 
 func tryCreateDb() (*gorm.DB, error) {
 	log.Debug("create db...")
-	_, err := os.Create(dbPath)
-	if err != nil {
+	if _, err := os.Create(dbPath); err != nil {
 		return nil, err
 	}
 	db, err := gorm.Open("sqlite3", dbPath)
@@ -185,8 +183,8 @@ func tryCreateDb() (*gorm.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not read sql file: %v", err)
 	}
-	err = db.Exec(string(b)).Error
-	if err != nil {
+
+	if err = db.Exec(string(b)).Error; err != nil {
 		return nil, fmt.Errorf("could not execute sql: %v", err)
 	}
 

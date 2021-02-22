@@ -40,6 +40,5 @@ type Data struct {
 
 // Convert converts part of the reddit request into entities ready for write into db.
 func (sr *SubRedditResponse) Convert() []*Element {
-	c, _ := NewConverter()
-	return c.Run(sr)
+	return NewConverter().Run(sr)
 }
