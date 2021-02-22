@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/drklauss/boobsBot/bot"
@@ -17,15 +16,12 @@ const (
 	updateCount = 10
 )
 
-// Update gets links from reddit by categories and save them.
-func Update(ctx context.Context, u *telegram.Update) {
-	db, err := bot.GetDB(ctx)
-	if err != nil {
-		log.Error(err)
+// UpdateHandler gets links from reddit by categories and save them.
+func UpdateHandler(req bot.HandlerRequest) {
+	if !checkAdmin(req) {
 		return
 	}
-
-	if err = reddit.Init(config.Get().Reddit); err != nil {
+	if err := reddit.Init(config.Get().Reddit); err != nil {
 		log.Errorf("could not initialize reddit client: %v", err)
 		return
 	}
@@ -34,7 +30,7 @@ func Update(ctx context.Context, u *telegram.Update) {
 		// goroutine for each category
 		// go
 		// remove goroutine - dont know reddit api limits for parallel requests
-		updateCategory(c, db, u.Message.Chat.ID)
+		updateCategory(c, req.DB, req.Update.Message.Chat.ID)
 	}
 }
 
@@ -57,7 +53,7 @@ func updateCategory(c config.Category, db *gorm.DB, chatID int) {
 		message += fmt.Sprintf("- fetched %d converted %d inserted %d items for '%s' from subreddit '%s'", result.fetched, result.converted, result.inserted, c.Name, subredditURI)
 	}
 	log.Infoln(message)
-	ms := telegram.MessageSend{
+	ms := telegram.MessageConfig{
 		ChatID: chatID,
 		Text:   message,
 	}

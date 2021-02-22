@@ -28,7 +28,6 @@ type client struct {
 // Init initialize client.
 func Init(c *config.Telegram) error {
 	httpClient := &http.Client{}
-	loadKeyboards()
 	if c.Proxy != nil {
 		var a *proxy.Auth
 		if c.Proxy.User != "" {
@@ -61,7 +60,7 @@ func Init(c *config.Telegram) error {
 
 // GetUpdateEntities returns telegram updates.
 func GetUpdateEntities() ([]Update, error) {
-	var response Response
+	var response ResponseUpdate
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
 	u.Path += "/getUpdates"
 	params := url.Values{}
@@ -90,7 +89,7 @@ func GetUpdateEntities() ([]Update, error) {
 	}
 
 	if err = json.Unmarshal(responseBody, &response); err != nil {
-		return response.Result, fmt.Errorf("could not unmarshall body: %w", err)
+		return response.Result, fmt.Errorf("could not unmarshall body: %w ('%s')", err, string(responseBody))
 	}
 
 	updLen := len(response.Result)
@@ -102,7 +101,7 @@ func GetUpdateEntities() ([]Update, error) {
 }
 
 // SendMessage sends text message into chat.
-func SendMessage(mes MessageSend) error {
+func SendMessage(mes MessageConfig) error {
 	u, _ := url.ParseRequestURI(tClient.config.API + tClient.config.Token)
 	u.Path += "/sendMessage"
 	params := url.Values{}
@@ -134,6 +133,15 @@ func SendMessage(mes MessageSend) error {
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	var response = Response{}
+	if err = json.Unmarshal(responseBody, &response); err != nil {
+		return fmt.Errorf("could not unmarshall body: %w ('%s')", err, string(responseBody))
+	}
+
+	if !response.Ok {
+		return errors.New("returned false")
 	}
 
 	return nil
@@ -175,6 +183,15 @@ func SendImage(photo MediaSend) error {
 		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
 	}
 
+	var response = Response{}
+	if err = json.Unmarshal(responseBody, &response); err != nil {
+		return fmt.Errorf("could not unmarshall body: %w ('%s')", err, string(responseBody))
+	}
+
+	if !response.Ok {
+		return errors.New("returned false")
+	}
+
 	return nil
 }
 
@@ -212,6 +229,15 @@ func SendDocument(doc MediaSend) error {
 		return fmt.Errorf("could not make request, resp code: %d, body: %s", resp.StatusCode, string(responseBody))
 	}
 
+	var response = Response{}
+	if err = json.Unmarshal(responseBody, &response); err != nil {
+		return fmt.Errorf("could not unmarshall body: %w ('%s')", err, string(responseBody))
+	}
+
+	if !response.Ok {
+		return errors.New("returned false")
+	}
+
 	return nil
 }
 
@@ -247,7 +273,7 @@ func SendAnswerCallbackQuery(acq AnswerCallbackQuery) error {
 
 	var response = Response{}
 	if err = json.Unmarshal(responseBody, &response); err != nil {
-		return fmt.Errorf("could not unmarshall body: %w", err)
+		return fmt.Errorf("could not unmarshall body: %w ('%s')", err, string(responseBody))
 	}
 
 	if !response.Ok {

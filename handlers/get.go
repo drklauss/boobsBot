@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/drklauss/boobsBot/bot"
@@ -13,51 +13,50 @@ import (
 )
 
 // Get main handler that handles requests from chats.
-func Get(ctx context.Context, u *telegram.Update) {
+func Get(req bot.HandlerRequest) {
 	var (
-		db     *gorm.DB
 		err    error
-		cat    *string
 		item   *model.Item
 		chatId int
 	)
 
-	if db, err = bot.GetDB(ctx); err != nil {
-		log.Warnln(err)
-		return
+	var category string
+	if req.Update.Message.ID > 0 {
+		category = req.Update.Message.Text
+	} else if req.Update.CallBackQuery.ID != "" {
+		category = req.Update.CallBackQuery.Data
+	}
+	if len(category) > 0 && category[:1] == "/" { // cats saved in db without "/"
+		category = category[1:]
+	}
+	if strings.Index(category, "@"+req.Config.Telegram.BotName) > 0 {
+		category = category[:strings.Index(category, "@"+req.Config.Telegram.BotName)]
 	}
 
-	if cat, err = bot.GetCategory(ctx); err != nil {
-		log.Warnln(err)
-		return
-	}
-
-	if u.Message.Chat.ID != 0 {
-		chatId = u.Message.Chat.ID
+	if req.Update.Message.Chat.ID != 0 {
+		chatId = req.Update.Message.Chat.ID
 	} else {
-		chatId = u.CallBackQuery.Message.Chat.ID
+		chatId = req.Update.CallBackQuery.Message.Chat.ID
 	}
 
-	if item, err = getItem(db, chatId, *cat); err != nil {
+	if item, err = getItem(req.DB, chatId, category); err != nil {
 		log.Errorln(err)
 		return
 	}
-
 	if item == nil {
-		log.Warnf("could not get item for cat %s", *cat)
+		log.Warnf("could not get item for cat %s", category)
 		return
 	}
 
-	if u.CallBackQuery.ID != "" {
-		acq := telegram.AnswerCallbackQuery{
-			CallbackQueryID: u.CallBackQuery.ID,
-			Text:            "Nice choice, maaaan!",
-			URL:             item.URL,
-		}
-		if err = telegram.SendAnswerCallbackQuery(acq); err != nil {
-			log.Errorln(err)
-			return
-		}
+	if req.Update.CallBackQuery.ID != "" {
+		//acq := telegram.AnswerCallbackQuery{
+		//	CallbackQueryID: req.Update.CallBackQuery.ID,
+		//	Text:            "Nice choice, maaaan!",
+		//	URL:             item.URL,
+		//}
+		//if err = telegram.SendAnswerCallbackQuery(acq); err == nil {
+		//	return
+		//}
 	}
 
 	ms := telegram.MediaSend{
@@ -65,12 +64,15 @@ func Get(ctx context.Context, u *telegram.Update) {
 		Caption: item.Caption,
 		ChatID:  chatId,
 	}
+	if req.Update.Message.Chat.Type == "private" {
+		ms.KeyboardMarkup = GetCategoriesKeyboard()
+	}
 	if err = ms.Send(); err != nil {
 		log.Errorln(err)
 		return
 	}
 
-	go writeStat(db, &u.Message.Chat, item)
+	go writeStat(req.DB, &req.Update.Message.Chat, item)
 }
 
 func writeStat(conn *gorm.DB, chat *telegram.Chat, item *model.Item) {

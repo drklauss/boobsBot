@@ -67,9 +67,9 @@ commands:
 targets:
   deploy:
     - go_build
-    #- check_service
-    #- backup_service
-    #- backup_db
+    - check_service
+    - backup_service
+    - backup_db
     - stop_service
     - upload_service
     - fix_upload

@@ -1,18 +1,17 @@
 package handlers
 
 import (
-	"context"
-
+	"github.com/drklauss/boobsBot/bot"
 	"github.com/drklauss/boobsBot/telegram"
 	log "github.com/sirupsen/logrus"
 )
 
 // Categories returns all categories available for request.
-func Categories(ctx context.Context, u *telegram.Update) {
-	ms := telegram.MessageSend{
-		ChatID:         u.Message.Chat.ID,
+func Categories(req bot.HandlerRequest) {
+	ms := telegram.MessageConfig{
+		ChatID:         req.Update.Message.Chat.ID,
 		Text:           "Choose category from list",
-		KeyboardMarkup: telegram.GetCategoriesInlineKeyboard(),
+		KeyboardMarkup: GetCategoriesInlineKeyboard(),
 	}
 	err := ms.Send()
 	if err != nil {
