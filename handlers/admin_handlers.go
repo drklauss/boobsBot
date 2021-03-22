@@ -15,6 +15,7 @@ const (
 	DebugStart     = "/debugStart"
 	DebugStop      = "/debugStop"
 	TopViewers     = "/topViewers"
+	MonthlyStat    = "/monthlyStat"
 	CategoriesStat = "/categoriesStat"
 	Update         = "/update"
 )
@@ -143,7 +144,54 @@ func TopViewersHandler(req bot.HandlerRequest) {
 	buf := new(bytes.Buffer)
 	buf.WriteString("\xF0\x9F\x93\x8A Top Viewers Report:\n")
 	for k, v := range tVs {
-		s := fmt.Sprintf("%d. %s (%s) - %d views\n", k+1, v.Title, v.Type, v.Count)
+		s := fmt.Sprintf("%d. %d views by %s '%s'\n", k+1, v.Count, v.Type, v.Title)
+		buf.WriteString(s)
+	}
+
+	mes := telegram.MessageConfig{
+		ChatID:         req.Update.Message.Chat.ID,
+		Text:           buf.String(),
+		KeyboardMarkup: telegram.ReplyKeyboardRemove{RemoveKeyboard: true},
+	}
+
+	if err := mes.Send(); err != nil {
+		log.Warnf("could not send message: %v", err)
+	}
+}
+
+// MonthlyStatHandler handles show monthly statistics request.
+func MonthlyStatHandler(req bot.HandlerRequest) {
+	if !checkAdmin(req) {
+		return
+	}
+	var stat []struct {
+		Month int
+		Day   int
+		Count int
+	}
+
+	sql := fmt.Sprintf(`
+		SELECT
+		
+			strftime('%%m', datetime(v.requestDate, 'unixepoch')) AS month,
+			strftime('%%d', datetime(v.requestDate, 'unixepoch')) AS day,
+			COUNT(v.itemId) AS count
+		FROM %s AS v
+		GROUP BY strftime('%%Y-%%m-%%d', datetime(v.requestDate, 'unixepoch'))
+		ORDER BY 
+			strftime('%%Y', datetime(v.requestDate, 'unixepoch')) DESC, 
+			strftime('%%m', datetime(v.requestDate, 'unixepoch')) DESC, 
+			strftime('%%d', datetime(v.requestDate, 'unixepoch')) DESC
+		LIMIT 30`, (new(model.View)).TableName())
+	if err := req.DB.Raw(sql).Scan(&stat).Error; err != nil {
+		log.Errorf("could not get monthly statistics stat: %s", err)
+		return
+	}
+
+	buf := new(bytes.Buffer)
+	buf.WriteString("\xF0\x9F\x93\x8A Monthly Statistics:\n")
+	for _, v := range stat {
+		s := fmt.Sprintf("%d.%d - %d views\n", v.Day, v.Month, v.Count)
 		buf.WriteString(s)
 	}
 

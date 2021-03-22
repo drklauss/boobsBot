@@ -44,6 +44,7 @@ func main() {
 	b.Handle(handlers.DebugStop, handlers.DebugStopHandler)
 	b.Handle(handlers.Update, handlers.UpdateHandler)
 	b.Handle(handlers.TopViewers, handlers.TopViewersHandler)
+	b.Handle(handlers.MonthlyStat, handlers.MonthlyStatHandler)
 	b.Handle(handlers.CategoriesStat, handlers.CategoriesStatHandler)
 	b.Handle("/start", handlers.Start)
 	b.Handle("/help", handlers.Help)
